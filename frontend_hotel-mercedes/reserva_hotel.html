@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercedes Lodge - Reservas</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Mercedes Lodge</h1>
+        <p class="tagline">Hotel</p>
+    </header>
+
+    <nav>
+        <a href="mi_cuenta.html">Mi Cuenta</a>
+        <a href="reserva_hotel.html" class="active">Reservar</a>
+        <a href="nosotros.html">Nosotros</a>
+    </nav>
+
+    <main>
+        <h2>Formulario de Reserva</h2>
+
+        <form id="formReserva">
+            <label for="nombre">Nombre completo</label>
+            <input type="text" id="nombre" required>
+
+            <label for="correo">Correo electrónico</label>
+            <input type="email" id="correo" required>
+
+            <label for="fecha">Fecha</label>
+            <input type="date" id="fecha" required>
+
+            <label for="noches">Hospedaje</label>
+            <select id="noches" required>
+                <option value="">Seleccione</option> <option value="1">1 noche</option>
+                <option value="2">2 noches</option>
+                <option value="3">3 noches</option>
+            </select>
+
+            <label for="habitacion">Tipo de habitación</label>
+            <select id="habitacion" required>
+                <option value="">Seleccione</option>
+                <option value="standard">Standard - S/150 por noche</option>
+                <option value="suite">Suite - S/250 por noche</option>
+                <option value="premium">Premium - S/350 por noche</option>
+            </select>
+
+            <label for="huespedes">Huéspedes</label>
+            <select id="huespedes" required>
+                <option value="">Seleccione</option> <option value="1">1 adulto</option>
+                <option value="2">2 adultos</option>
+                <option value="3">3 adultos</option>
+            </select>
+
+            <label for="ninos">Niños</label>
+            <select id="ninos" required>
+                <option value="">Seleccione</option> <option value="0">0 niños</option>
+                <option value="1">1 niño</option>
+            <option value="2">2 niños</option>
+            </select>
+
+            <div class="precio-final">
+                Precio total: 
+                <output id="precio" for="noches habitacion"></output>
+            </div>
+
+            <button type="submit">Confirmar Reserva</button>
+        </form>
+
+        <p id="mensaje"></p>
+    </main>
+
+    <footer>
+        © 2025 Hotel Mercede Lodge. Sistema de Reservas
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

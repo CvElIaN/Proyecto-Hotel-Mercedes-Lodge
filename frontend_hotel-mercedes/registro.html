@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercedes Lodge - Registro</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Mercedes Lodge</h1>
+        <p class="tagline">Hotel</p>
+    </header>
+
+    <nav>
+        <a href="mi_cuenta.html">Mi Cuenta</a>
+        <a href="reserva_hotel.html">Reservar</a>
+        <a href="nosotros.html">Nosotros</a>
+    </nav>
+
+    <main>
+        <h2>Crear Cuenta Nueva</h2>
+
+        <form id="formRegistro">
+            <label for="nombreRegistro">Nombre completo</label>
+            <input type="text" id="nombreRegistro" required>
+
+            <label for="correoRegistro">Correo electrónico</label>
+            <input type="email" id="correoRegistro" required>
+
+            <label for="passRegistro">Contraseña</label>
+            <input type="password" id="passRegistro" required>
+
+            <p id="mensajeRegistro"></p>
+
+            <button type="submit">Registrarme</button>
+        </form>
+        
+    </main>
+
+    <footer>
+        © 2025 Hotel Mercede Lodge
+    </footer>
+
+    <script src="script.js"></script>
+    </body>
+</html>

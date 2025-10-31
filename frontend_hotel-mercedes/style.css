@@ -1,0 +1,227 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    /* MODIFICADO: Usamos 'Lato' como fuente base */
+    font-family: 'Lato', Arial, sans-serif;
+    margin: 0;
+    background: url('Fondo_Page.jpg') center/cover no-repeat fixed;
+    
+    /* MODIFICADO: texto base un más legible */
+    line-height: 1.6;
+    color: #333; /* Un negro un poco más suave que el negro puro */
+}
+
+header {
+    background-color: rgba(60, 110, 113, 0.85); /* #3c6e71 */
+    color: white;
+    text-align: center;
+    padding: 20px;
+    
+    /* --- NUEVO: Sombra para dar profundidad --- */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* --- NUEVO: Estilo específico para títulos --- */
+h1, h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+}
+
+/* --- AJUSTADO: Estilos para el h1 y el subtítulo 'tagline' --- */
+header h1 { /* Este es 'Mercedes Lodge' */
+    margin: 5px 0;
+    font-size: 2.5em;
+    font-weight: 600;
+}
+/* Este es el <p class="tagline"> (Hotel) */
+header .tagline {
+    font-size: 1.5em;
+    font-weight: 400;
+    margin: 0; /* Quitamos el margen por defecto del párrafo */
+    /* El color 'white' lo hereda del <header> */
+}
+
+nav {
+    /* MODIFICADO: Verde oscuro de la paleta */
+    background-color: rgba(39, 76, 79, 0.9); /* #274c4f con transparencia */
+    text-align: center;
+    padding: 10px;
+}
+
+/* La regla 'nav' (la que tiene el fondo #284b63) se queda como está */
+
+nav a {
+    color: white;
+    margin: 0 5px; /* Reduce el margen horizontal */
+    font-weight: bold;
+    text-decoration: none;
+    
+    /* NUEVO: Preparamos la píldora */
+    padding: 8px 15px; /* Damos espaciado interno (arriba/abajo, izq/der) */
+    border-radius: 20px; /* Hacemos los bordes completamente redondos */
+
+    /* MODIFICADO: Transición de fondo y color */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* -- MODIFICADO: Combina el hover y el estado activo -- */
+nav a:hover,
+nav a.active {
+    text-decoration: none;
+    color: #333; 
+    background-color: #aed9e0;
+}
+
+main {
+    max-width: 550px;
+    margin: 30px auto; /* Aumentamos el margen superior */
+    background: rgba(255,255,255,0.95); /* Un poco más opaco */
+    padding: 30px; /* Más espaciado interno */
+    border-radius: 8px;
+    
+    /* --- NUEVO: Sombra más pronunciada para el formulario --- */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+main h2 {
+    text-align: center;
+    color: #284b63; /* Usamos el color oscuro de la nav */
+    margin-top: 0; /* Quitamos margen superior */
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-top: 15px; /* Más separación */
+    color: #555;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px; /* Un poco más altos */
+    margin-top: 5px;
+    border: 2px solid #ddd; /* Borde más sutil */
+    border-radius: 6px;
+    
+    /* --- NUEVO: Transición para el efecto :focus --- */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- NUEVO: Pone el "Seleccione" en gris claro --- */
+/* Esto funciona porque todos los 'select' son 'required' 
+   y la opción por defecto (value="") es considerada 'inválida'.
+*/
+select:invalid {
+    color: #aaa; /* Un gris claro */
+}
+
+/* Esto asegura que las opciones *dentro de la lista* (cuando la abres) se vean oscuras.
+*/
+select option {
+    color: #333; 
+}
+
+
+button {
+    width: 100%;
+    padding: 14px; /* Botón más grande */
+    margin-top: 25px; /* Más espacio arriba */
+    background: #3c6e71;
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título */
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    
+    /* --- NUEVO: Transición suave para el botón --- */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background: #274c4f; /* Color oscuro */
+    
+    /* --- NUEVO: Pequeño efecto de "presionar" --- */
+    transform: translateY(-2px); 
+}
+
+/* Este es el contenedor <div> que dice "Precio total: ..." */
+.precio-final {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333; /* Color del texto "Precio total:" */
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Este es el <output id="precio"> (solo el número S/XXX) */
+#precio {
+    font-weight: bold; /* Hereda el bold */
+    color: #007700; /* Mantenemos el color verde para el precio */
+    font-size: 1em; /* Hereda el tamaño (20px) del padre */
+    
+    /* Importante: <output> es 'inline' por defecto, 
+       no necesitamos cambiarle márgenes ni alineación. */
+}
+
+#mensaje {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #007700;
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(40, 75, 99, 0.9);
+    color: white;
+}
+
+@media (max-width: 600px) {
+    nav a {
+        display: block;
+        margin: 8px 0;
+    }
+    main {
+        width: 90%;
+        padding: 20px;
+    }
+    header h1 {
+        font-size: 2em;
+    }
+    header h1:last-child {
+        font-size: 1.2em;
+    }
+}
+
+/* --- ESTILOS PARA MI_CUENTA.HTML (del paso anterior) --- */
+/* (Los incluimos para que todo siga funcionando) */
+
+.login-links {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.login-links a {
+    display: block; 
+    margin: 8px 0;
+    color: #3c6e71;
+    text-decoration: none;
+}
+
+.login-links a:hover {
+    text-decoration: underline;
+}
+
+#mensajeLogin {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #990000;
+}
