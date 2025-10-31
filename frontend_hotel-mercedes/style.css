@@ -5,14 +5,17 @@
 }
 
 body {
-    /* MODIFICADO: Usamos 'Lato' como fuente base */
+    /* Tus estilos existentes... */
     font-family: 'Lato', Arial, sans-serif;
     margin: 0;
     background: url('Fondo_Page.jpg') center/cover no-repeat fixed;
-    
-    /* MODIFICADO: texto base un más legible */
     line-height: 1.6;
-    color: #333; /* Un negro un poco más suave que el negro puro */
+    color: #333;
+    
+    /* --- AÑADE ESTAS 3 LÍNEAS --- */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 header {
@@ -77,13 +80,15 @@ nav a.active {
 }
 
 main {
-    max-width: 550px;
-    margin: 30px auto; /* Aumentamos el margen superior */
-    background: rgba(255,255,255,0.95); /* Un poco más opaco */
-    padding: 30px; /* Más espaciado interno */
+    /* ▼▼ MODIFICA ESTA LÍNEA ▼▼ */
+    width: 500px; 
+    margin-top: 30px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: auto;
+    background: rgba(255,255,255,0.95);
+    padding: 30px;
     border-radius: 8px;
-    
-    /* --- NUEVO: Sombra más pronunciada para el formulario --- */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
@@ -128,7 +133,7 @@ select option {
 
 button {
     width: 100%;
-    padding: 14px; /* Botón más grande */
+    padding: 16px; /* Botón más grande */
     margin-top: 25px; /* Más espacio arriba */
     background: #3c6e71;
     border: none;
@@ -144,7 +149,7 @@ button {
 }
 
 button:hover {
-    background: #274c4f; /* Color oscuro */
+    background: #18c5d4; /* Color claro */
     
     /* --- NUEVO: Pequeño efecto de "presionar" --- */
     transform: translateY(-2px); 
