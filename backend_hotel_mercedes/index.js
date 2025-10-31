@@ -51,6 +51,10 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ mensaje: 'Todos los campos son requeridos.' });
         }
 
+        if (password.length < 6) {
+            return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
+        }
+
         // 1. Encriptamos la contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);

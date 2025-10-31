@@ -45,13 +45,6 @@ if (document.getElementById("formReserva")) {
     });
 }
 
-
-/*
-=========================================
- ¡NUEVO! CÓDIGO PARA EL FORMULARIO DE LOGIN
- (mi_cuenta.html)
-=========================================
-*/
 const formLogin = document.getElementById("formLogin");
 
 if (formLogin) {
@@ -107,13 +100,6 @@ if (formLogin) {
     });
 }
 
-
-/*
-=========================================
- ¡NUEVO! CÓDIGO PARA EL FORMULARIO DE REGISTRO
- (registro.html)
-=========================================
-*/
 const formRegistro = document.getElementById("formRegistro");
 
 if (formRegistro) {
@@ -124,6 +110,14 @@ if (formRegistro) {
         const correo = document.getElementById("correoRegistro").value;
         const pass = document.getElementById("passRegistro").value;
         const mensajeRegistro = document.getElementById("mensajeRegistro");
+
+        const confirmPass = document.getElementById("confirmPassRegistro").value;
+
+        if (pass !== confirmPass) {
+            mensajeRegistro.textContent = "Las contraseñas no coinciden.";
+            mensajeRegistro.style.color = "#990000";
+            return; // Detiene el envío del formulario
+        }
 
         try {
             // 1. Llamamos al endpoint /api/register de nuestro backend
@@ -149,10 +143,9 @@ if (formRegistro) {
                 mensajeRegistro.style.color = "#007700";
                 formRegistro.reset();
 
-                // Opcional: Redirigir al login después de 2 segundos
-                // setTimeout(() => {
-                //    window.location.href = 'mi_cuenta.html';
-                // }, 2000);
+                setTimeout(() => {
+                   window.location.href = 'mi_cuenta.html';
+                }, 2000);
 
             } else {
                 // Error (ej. "El correo ya existe")
