@@ -7,6 +7,30 @@ const db = require('./db');
 const bcrypt = require('bcrypt'); // <-- Para encriptar contraseñas
 const jwt = require('jsonwebtoken'); // <-- Para crear tokens de sesión
 
+// Middleware para verificar el token (nuestro "guardia")
+function verificarToken(req, res, next) {
+    // Obtenemos el token del encabezado 'Authorization'
+    // Formato esperado: "Bearer TOKEN_LARGO_AQUI"
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Nos quedamos solo con el token
+
+    if (token == null) {
+        // No hay token, acceso denegado
+        return res.sendStatus(401); // No autorizado
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, usuario) => {
+        if (err) {
+            // El token es inválido o expiró
+            return res.sendStatus(403); // Prohibido
+        }
+        
+        // El token es válido, guardamos los datos del usuario en el 'req'
+        // para que la siguiente función (la ruta) pueda usarlo
+        req.usuario = usuario;
+        next(); // ¡Pase, por favor!
+    });
+}
 // 2. Configuración inicial
 const app = express();
 const PORT = 3001;
@@ -127,7 +151,8 @@ app.post('/api/login', async (req, res) => {
         // 4. Enviamos el token al frontend
         res.json({
             mensaje: '¡Bienvenido, ' + usuario.nombre + '!',
-            token: token
+            token: token,
+            nombre: usuario.nombre
         });
 
     } catch (error) {
@@ -138,7 +163,88 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// -----------------------------------------------------------------
+// ¡NUEVO! ENDPOINT PARA CREAR RESERVAS
+// -----------------------------------------------------------------
+// Usamos verificarToken como "guardia" de esta ruta.
+// Nadie puede acceder a /api/reservas sin un token válido.
+app.post('/api/reservas', verificarToken, async (req, res) => {
+    try {
+        // Obtenemos el ID del usuario desde el token (que puso el middleware)
+        const usuario_id = req.usuario.id;
 
+        // Obtenemos los datos del formulario (enviados por script.js)
+        const { habitacion, fecha, noches, huespedes, ninos, precioTotal } = req.body;
+        
+        // --- Importante: Convertir datos ---
+        // La BD espera el ID de la habitación (1, 2, 3), no el texto ("standard", "suite")
+        // (Según tu bd_mercedes.sql)
+        const mapHabitacionID = {
+            'standard': 1,
+            'suite': 2,
+            'premium': 3
+        };
+        const habitacion_id = mapHabitacionID[habitacion];
+
+        // Validamos que los datos no estén vacíos
+        if (!usuario_id || !habitacion_id || !fecha || !noches || !huespedes || !ninos || !precioTotal) {
+            return res.status(400).json({ mensaje: 'Faltan datos para la reserva.' });
+        }
+        
+        // 3. Guardamos la reserva en la BD
+        const [resultado] = await db.query(
+            'INSERT INTO Reservas (usuario_id, habitacion_id, fecha_reserva, num_noches, huespedes, ninos, precio_total) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [usuario_id, habitacion_id, fecha, noches, huespedes, ninos, precioTotal]
+        );
+
+        // 4. Respondemos con éxito
+        res.status(201).json({ 
+            mensaje: '¡Reserva registrada exitosamente!',
+            reservaId: resultado.insertId 
+        });
+
+    } catch (error) {
+        res.status(500).json({ 
+            mensaje: 'Error en el servidor al crear la reserva',
+            error: error.message 
+        });
+    }
+});
+// -----------------------------------------------------------------
+// ¡NUEVO! ENDPOINT PARA OBTENER LAS RESERVAS DE UN USUARIO
+// -----------------------------------------------------------------
+// También usamos el "guardia" para proteger esta ruta
+app.get('/api/mis-reservas', verificarToken, async (req, res) => {
+    try {
+        // El ID del usuario viene del token
+        const usuario_id = req.usuario.id;
+
+        // Hacemos un JOIN para obtener el nombre de la habitación
+        const [reservas] = await db.query(
+            `SELECT 
+                r.id,
+                r.fecha_reserva, 
+                r.num_noches, 
+                r.huespedes, 
+                r.ninos, 
+                r.precio_total, 
+                h.tipo AS habitacion_tipo 
+            FROM Reservas AS r
+            JOIN Habitaciones AS h ON r.habitacion_id = h.id
+            WHERE r.usuario_id = ?
+            ORDER BY r.fecha_reserva DESC`,
+            [usuario_id]
+        );
+
+        res.json(reservas); // Enviamos el array de reservas
+
+    } catch (error) {
+        res.status(500).json({
+            mensaje: 'Error en el servidor al obtener las reservas',
+            error: error.message
+        });
+    }
+});
 // 6. Iniciar el servidor (Esto se queda igual)
 app.listen(PORT, () => {
     console.log(`Servidor corriendo exitosamente en http://localhost:${PORT}`);

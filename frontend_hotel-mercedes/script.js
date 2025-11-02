@@ -8,8 +8,6 @@ const API_URL = 'http://localhost:3001/api';
   luego lo conectaremos)
 =========================================
 */
-document.getElementById("fecha").min = new Date().toISOString().split("T")[0];
-
 function calcularPrecio() {
     const precioHabitaciones = {
         standard: 150,
@@ -29,19 +27,79 @@ function calcularPrecio() {
 }
 
 if (document.getElementById("formReserva")) {
+    // (Esta es la línea que movimos antes, se queda)
+    document.getElementById("fecha").min = new Date().toISOString().split("T")[0];
+    
     document.getElementById("habitacion").addEventListener("change", calcularPrecio);
     document.getElementById("noches").addEventListener("change", calcularPrecio);
     
-    document.getElementById("formReserva").addEventListener("submit", function(event) {
+    // ▼▼ MODIFICAMOS EL SUBMIT ▼▼
+    document.getElementById("formReserva").addEventListener("submit", async function(event) {
         event.preventDefault(); 
         
-        // Lógica de reserva (temporal)
-        const nombre = document.getElementById("nombre").value;
         const mensajeElemento = document.getElementById("mensaje");
-        mensajeElemento.textContent = "¡Gracias, " + nombre + "! Tu reserva ha sido registrada.";
-        mensajeElemento.style.color = "#007700";
-        document.getElementById("formReserva").reset();
-        document.getElementById("precio").value = "";
+
+        // 1. Verificar si el usuario está logueado
+        const token = localStorage.getItem('token');
+        if (!token) {
+            mensajeElemento.textContent = "Error: Debes iniciar sesión para poder reservar.";
+            mensajeElemento.style.color = "#990000";
+            return;
+        }
+
+        // 2. Recolectar todos los datos del formulario
+        const habitacion = document.getElementById("habitacion").value;
+        const fecha = document.getElementById("fecha").value;
+        const noches = parseInt(document.getElementById("noches").value);
+        const huespedes = parseInt(document.getElementById("huespedes").value);
+        const ninos = parseInt(document.getElementById("ninos").value);
+        
+        // 3. Limpiar el precio (de "S/300" a 300)
+        const precioOutput = document.getElementById("precio").value;
+        const precioTotal = Number(precioOutput.replace('S/', ''));
+        
+        try {
+            // 4. Enviar los datos al backend
+            const response = await fetch(`${API_URL}/reservas`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // ¡IMPORTANTE! Enviamos el token para que el "guardia" nos deje pasar
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    habitacion: habitacion,
+                    fecha: fecha,
+                    noches: noches,
+                    huespedes: huespedes,
+                    ninos: ninos,
+                    precioTotal: precioTotal // Este nombre debe coincidir con el backend
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // ¡Éxito!
+                mensajeElemento.textContent = data.mensaje; // "¡Reserva registrada...!"
+                mensajeElemento.style.color = "#007700";
+                document.getElementById("formReserva").reset();
+                document.getElementById("precio").value = "";
+            } else {
+                // Error (ej. token expirado o datos incorrectos)
+                if (response.status === 401 || response.status === 403) {
+                   mensajeElemento.textContent = "Error: Tu sesión ha expirado. Por favor, inicia sesión de nuevo.";
+                } else {
+                   mensajeElemento.textContent = data.mensaje; // "Faltan datos..."
+                }
+                mensajeElemento.style.color = "#990000";
+            }
+
+        } catch (error) {
+            mensajeElemento.textContent = "Error de conexión con el servidor.";
+            mensajeElemento.style.color = "#990000";
+            console.error('Error al reservar:', error);
+        }
     });
 }
 
@@ -56,34 +114,26 @@ if (formLogin) {
         const mensajeLogin = document.getElementById("mensajeLogin");
 
         try {
-            // 1. Llamamos al endpoint /api/login de nuestro backend
             const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    correo: correo,
-                    password: pass
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correo: correo, password: pass })
             });
 
-            // 2. Obtenemos la respuesta del backend
             const data = await response.json();
 
-            // 3. Mostramos el mensaje (de éxito o error)
             if (response.ok) {
                 // Éxito
-                mensajeLogin.textContent = data.mensaje; // "¡Bienvenido, ...!"
+                mensajeLogin.textContent = data.mensaje;
                 mensajeLogin.style.color = "#007700";
                 formLogin.reset();
                 
-                // ¡IMPORTANTE! Guardamos el token en el navegador
-                // Esto nos servirá para saber que el usuario está logueado
+                // ¡IMPORTANTE! Guardamos el token Y el nombre
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('userName', data.nombre); // <-- NUEVO
 
-                // Opcional: Redirigir al usuario a la página de reservas
-                // window.location.href = 'reserva_hotel.html';
+                // Mostramos el panel de usuario
+                mostrarInfoUsuario(data.token, data.nombre);
 
             } else {
                 // Error (ej. "Correo o contraseña incorrectos")
@@ -92,12 +142,41 @@ if (formLogin) {
             }
 
         } catch (error) {
-            // Error de conexión (ej. si el backend está caído)
             mensajeLogin.textContent = "Error de conexión. Inténtelo más tarde.";
             mensajeLogin.style.color = "#990000";
             console.error('Error en el login:', error);
         }
     });
+
+    // --- NUEVO: Verificamos si ya hay sesión al cargar la página ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        const nombre = localStorage.getItem('userName');
+
+        // Si estamos en mi_cuenta.html Y tenemos token, mostramos el panel
+        if (token && nombre && document.getElementById('zonaLogin')) {
+            mostrarInfoUsuario(token, nombre);
+        }
+    });
+
+    // --- NUEVO: Lógica para cerrar sesión ---
+    const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+    if(btnCerrarSesion) {
+        btnCerrarSesion.addEventListener('click', () => {
+            // Borramos los datos
+            localStorage.removeItem('token');
+            localStorage.removeItem('userName');
+
+            // Mostramos el login y ocultamos el panel
+            document.getElementById('zonaLogin').classList.remove('hidden');
+            document.getElementById('infoUsuario').classList.add('hidden');
+            
+            // Limpiamos los datos
+            document.getElementById('saludoUsuario').textContent = '';
+            document.getElementById('listaReservas').innerHTML = '';
+            document.getElementById('mensajeLogin').textContent = '';
+        });
+    }
 }
 
 const formRegistro = document.getElementById("formRegistro");
@@ -160,4 +239,76 @@ if (formRegistro) {
             console.error('Error en el registro:', error);
         }
     });
+}
+// =======================================================
+// NUEVAS FUNCIONES PARA EL PANEL DE "MI CUENTA"
+// =======================================================
+
+function mostrarInfoUsuario(token, nombre) {
+    // 1. Ocultar el formulario de login
+    document.getElementById('zonaLogin').classList.add('hidden');
+    
+    // 2. Mostrar el panel de info de usuario
+    const infoUsuarioDiv = document.getElementById('infoUsuario');
+    infoUsuarioDiv.classList.remove('hidden');
+
+    // 3. Poner el saludo
+    document.getElementById('saludoUsuario').textContent = `¡Hola, ${nombre}!`;
+
+    // 4. Cargar las reservas
+    cargarReservas(token);
+}
+
+async function cargarReservas(token) {
+    const listaReservasDiv = document.getElementById('listaReservas');
+    listaReservasDiv.innerHTML = '<p>Cargando tus reservas...</p>'; // Mensaje temporal
+
+    try {
+        const response = await fetch(`${API_URL}/mis-reservas`, {
+            method: 'GET',
+            headers: {
+                // Enviamos el token para que el "guardia" nos deje pasar
+                'Authorization': `Bearer ${token}` 
+            }
+        });
+
+        if (!response.ok) {
+            // El token expiró o algo salió mal
+            listaReservasDiv.innerHTML = '<p>Error al cargar tus reservas. Intenta iniciar sesión de nuevo.</p>';
+            return;
+        }
+
+        const reservas = await response.json();
+
+        if (reservas.length === 0) {
+            listaReservasDiv.innerHTML = '<p>Aún no tienes ninguna reserva registrada.</p>';
+            return;
+        }
+
+        // Si hay reservas, las mostramos
+        listaReservasDiv.innerHTML = ''; // Limpiamos el "Cargando..."
+
+        reservas.forEach(reserva => {
+            // Formateamos la fecha (viene como YYYY-MM-DD)
+            const fecha = new Date(reserva.fecha_reserva).toLocaleDateString('es-ES', {
+                year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+            });
+
+            // Creamos la "tarjeta" de reserva
+            const reservaItem = document.createElement('div');
+            reservaItem.className = 'reserva-item';
+            reservaItem.innerHTML = `
+                <h4>Habitación ${reserva.habitacion_tipo}</h4>
+                <p><strong>Fecha:</strong> ${fecha}</p>
+                <p><strong>Noches:</strong> ${reserva.num_noches}</p>
+                <p><strong>Huéspedes:</strong> ${reserva.huespedes} Adultos, ${reserva.ninos} Niños</p>
+                <p class="precio"><strong>Total pagado:</strong> S/${reserva.precio_total}</p>
+            `;
+            listaReservasDiv.appendChild(reservaItem);
+        });
+
+    } catch (error) {
+        listaReservasDiv.innerHTML = '<p>Error de conexión al cargar tus reservas.</p>';
+        console.error('Error cargando reservas:', error);
+    }
 }

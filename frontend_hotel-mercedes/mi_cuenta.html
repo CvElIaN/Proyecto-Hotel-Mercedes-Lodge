@@ -25,23 +25,34 @@
     </nav>
 
     <main>
-        <h2>Iniciar Sesión</h2>
+        <div id="zonaLogin">
+            <h2>Iniciar Sesión</h2>
 
-        <form id="formLogin">
-            <label for="correoLogin">Correo electrónico</label>
-            <input type="email" id="correoLogin" required>
+            <form id="formLogin">
+                <label for="correoLogin">Correo electrónico</label>
+                <input type="email" id="correoLogin" required>
 
-            <label for="passLogin">Contraseña</label>
-            <input type="password" id="passLogin" required>
+                <label for="passLogin">Contraseña</label>
+                <input type="password" id="passLogin" required>
 
-            <p id="mensajeLogin"></p>
+                <p id="mensajeLogin"></p>
 
-            <button type="submit">Ingresar</button>
-        </form>
+                <button type="submit">Ingresar</button>
+            </form>
 
-        <div class="login-links">
-            <a href="#">¿Olvidaste tu contraseña?</a>
-            <a href="registro.html">Crear una cuenta nueva</a>
+            <div class="login-links">
+                <a href="#">¿Olvidaste tu contraseña?</a>
+                <a href="registro.html">Crear una cuenta nueva</a>
+            </div>
+        </div>
+
+        <div id="infoUsuario" class="hidden">
+            <h2 id="saludoUsuario"></h2>
+            <button id="btnCerrarSesion" type="button">Cerrar Sesión</button>
+            
+            <h3>Mis Reservas</h3>
+            <div id="listaReservas">
+                </div>
         </div>
         
     </main>

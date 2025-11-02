@@ -80,7 +80,6 @@ nav a.active {
 }
 
 main {
-    /* ▼▼ MODIFICA ESTA LÍNEA ▼▼ */
     width: 500px; 
     margin-top: 30px;
     margin-left: auto;
@@ -229,4 +228,64 @@ footer {
     margin-top: 15px;
     font-weight: bold;
     color: #990000;
+}
+/* --- ESTILOS PARA "MI CUENTA" (NUEVO) --- */
+
+/* Clase simple para ocultar elementos */
+.hidden {
+    display: none;
+}
+
+/* Estilo para el botón de cerrar sesión */
+#btnCerrarSesion {
+    width: auto; /* No ocupa el 100% */
+    padding: 10px 20px;
+    font-size: 14px;
+    background: #aa4a44; /* Un tono rojo */
+    margin-top: 0;
+    margin-bottom: 25px; /* Espacio antes de "Mis Reservas" */
+}
+
+#btnCerrarSesion:hover {
+    background: #c95b54;
+    transform: none; /* Quitamos el efecto de "presionar" */
+}
+
+/* Título de saludo */
+#saludoUsuario {
+    text-align: left; /* Alineado a la izquierda */
+    color: #333;
+    margin-top: 0;
+    font-size: 1.8em;
+}
+
+/* Contenedor de la lista de reservas */
+#listaReservas {
+    margin-top: 15px;
+}
+
+/* Cada tarjeta de reserva individual */
+.reserva-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.reserva-item h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #284b63;
+    font-size: 1.2em;
+    text-transform: capitalize; /* Pone "standard" como "Standard" */
+}
+.reserva-item p {
+    margin: 4px 0;
+    color: #555;
+}
+.reserva-item .precio {
+    font-weight: bold;
+    color: #007700;
+    font-size: 1.1em;
+    margin-top: 10px;
 }

@@ -6,7 +6,7 @@ const mysql = require('mysql2');
 const dbConfig = {
     host: 'localhost',       // O la IP de tu servidor de base de datos
     user: 'root',            // Tu usuario de MySQL
-    password: 'root',            // <-- PON TU CONTRASEÑA DE MYSQL AQUÍ
+    password: '', // <-- ¡Cambiado para XAMPP!
     database: 'hotel_mercedes_db' // El nombre de la base de datos que creamos
 };
 
