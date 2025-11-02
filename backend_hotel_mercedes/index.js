@@ -1,3 +1,5 @@
+// Archivo: index.js
+
 // 1. Importar las dependencias
 const express = require('express');
 const cors = require('cors');
@@ -29,6 +31,15 @@ function verificarToken(req, res, next) {
         next(); // ¡Pase, por favor!
     });
 }
+
+// NUEVO: Middleware para verificar si el usuario es administrador
+function verificarAdmin(req, res, next) {
+    if (req.usuario.rol !== 'administrador') {
+        return res.status(403).json({ mensaje: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
+    next();
+}
+
 // 2. Configuración inicial
 const app = express();
 const PORT = 3001;
@@ -61,14 +72,12 @@ app.get('/api/prueba-db', async (req, res) => {
 
 
 // -----------------------------------------------------------------
-// ENDPOINT DE REGISTRO DE USUARIO (ACTUALIZADO)
+// ENDPOINT DE REGISTRO DE USUARIO
 // -----------------------------------------------------------------
 app.post('/api/register', async (req, res) => {
     try {
-        // Obtenemos los datos del frontend (¡con los campos nuevos!)
         const { nombre, correo, password, pregunta, respuesta } = req.body;
 
-        // Validamos que vengan los datos
         if (!nombre || !correo || !password || !pregunta || !respuesta) {
             return res.status(400).json({ mensaje: 'Todos los campos son requeridos.' });
         }
@@ -77,25 +86,21 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
         }
 
-        // 1. Encriptamos AMBAS cosas: contraseña y respuesta
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
-        const respuestaHash = await bcrypt.hash(respuesta, salt); // ¡NUEVO!
+        const respuestaHash = await bcrypt.hash(respuesta, salt);
 
-        // 2. Guardamos el nuevo usuario en la BD
         const [resultado] = await db.query(
             'INSERT INTO Usuarios (nombre, correo, password, pregunta_seguridad, respuesta_seguridad) VALUES (?, ?, ?, ?, ?)',
-            [nombre, correo, passwordHash, pregunta, respuestaHash] // ¡ACTUALIZADO!
+            [nombre, correo, passwordHash, pregunta, respuestaHash]
         );
 
-        // 3. Respondemos con éxito
         res.status(201).json({ 
             mensaje: '¡Usuario registrado exitosamente!',
             usuarioId: resultado.insertId 
         });
 
     } catch (error) {
-        // Manejo de error (ej. si el correo ya existe)
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ mensaje: 'El correo electrónico ya está registrado.' });
         }
@@ -108,14 +113,12 @@ app.post('/api/register', async (req, res) => {
 
 
 // -----------------------------------------------------------------
-// ENDPOINT DE LOGIN DE USUARIO (mi_cuenta.html)
+// MODIFICADO: ENDPOINT DE LOGIN DE USUARIO (mi_cuenta.html)
 // -----------------------------------------------------------------
 app.post('/api/login', async (req, res) => {
     try {
-        // Obtenemos los datos de mi_cuenta.html
         const { correo, password } = req.body;
 
-        // 1. Verificamos que el correo exista
         const [usuarios] = await db.query(
             'SELECT * FROM Usuarios WHERE correo = ?',
             [correo]
@@ -127,31 +130,27 @@ app.post('/api/login', async (req, res) => {
 
         const usuario = usuarios[0];
 
-        // 2. Comparamos la contraseña que nos da el usuario
-        //    con la contraseña encriptada que tenemos en la BD
         const passCorrecto = await bcrypt.compare(password, usuario.password);
 
         if (!passCorrecto) {
             return res.status(400).json({ mensaje: 'Correo o contraseña incorrectos.' });
         }
 
-        // 3. Si todo está bien, creamos un Token (JWT)
-        // El token guarda el ID del usuario y su ROL
         const token = jwt.sign(
             { 
                 id: usuario.id, 
                 rol: usuario.rol 
             },
             JWT_SECRET,
-            { expiresIn: '1h' } // El token expira en 1 hora
+            { expiresIn: '1h' } 
         );
 
-        // 4. Enviamos el token al frontend
+        // MODIFICADO: Enviamos el token, nombre Y el ROL
         res.json({
             mensaje: '¡Bienvenido, ' + usuario.nombre + '!',
             token: token,
             nombre: usuario.nombre,
-            rol: usuario.rol // Lo incluimos para el futuro panel de admin
+            rol: usuario.rol // <-- NUEVO: EL ROL ES VITAL PARA EL FRONTEND
         });
 
     } catch (error) {
@@ -181,9 +180,17 @@ app.post('/api/reservas', verificarToken, async (req, res) => {
         };
         const habitacion_id = mapHabitacionID[habitacion];
 
-        // Validamos que los datos no estén vacíos
-        if (!usuario_id || !habitacion_id || !fecha || !noches || !huespedes || !ninos || !precioTotal) {
+        // 1. VALIDACIÓN DE PRESENCIA: 
+        // Verificamos que todos los campos requeridos estén presentes (incluso si ninos es 0)
+        // Usamos una verificación de null/undefined/cadena vacía, pero permitimos 0.
+        if (!usuario_id || !habitacion_id || !fecha || noches == null || huespedes == null || ninos == null || precioTotal == null) {
             return res.status(400).json({ mensaje: 'Faltan datos para la reserva.' });
+        }
+        
+        // 2. VALIDACIÓN LÓGICA: 
+        // Verificamos que los campos que no pueden ser 0, sean positivos.
+        if (noches <= 0 || huespedes <= 0 || precioTotal <= 0) {
+            return res.status(400).json({ mensaje: 'El número de noches, huéspedes adultos y el precio total deben ser mayores a cero.' });
         }
         
         // 3. Guardamos la reserva en la BD
@@ -205,32 +212,57 @@ app.post('/api/reservas', verificarToken, async (req, res) => {
         });
     }
 });
+
 // -----------------------------------------------------------------
-// ENDPOINT PARA OBTENER LAS RESERVAS DE UN USUARIO
+// ENDPOINT PARA OBTENER LAS RESERVAS (Cliente O Admin)
 // -----------------------------------------------------------------
 app.get('/api/mis-reservas', verificarToken, async (req, res) => {
     try {
-        // El ID del usuario viene del token
         const usuario_id = req.usuario.id;
+        const rol = req.usuario.rol;
 
-        // Hacemos un JOIN para obtener el nombre de la habitación
-        const [reservas] = await db.query(
-            `SELECT 
-                r.id,
-                r.fecha_reserva, 
-                r.num_noches, 
-                r.huespedes, 
-                r.ninos, 
-                r.precio_total, 
-                h.tipo AS habitacion_tipo 
-            FROM Reservas AS r
-            JOIN Habitaciones AS h ON r.habitacion_id = h.id
-            WHERE r.usuario_id = ?
-            ORDER BY r.fecha_reserva DESC`,
-            [usuario_id]
-        );
+        let querySQL;
+        let queryParams = [];
 
-        res.json(reservas); // Enviamos el array de reservas
+        if (rol === 'administrador') {
+            // Admin ve TODAS las reservas y el nombre/correo del usuario
+            querySQL = `
+                SELECT 
+                    r.id,
+                    r.fecha_reserva, 
+                    r.num_noches, 
+                    r.huespedes, 
+                    r.ninos, 
+                    r.precio_total, 
+                    h.tipo AS habitacion_tipo,
+                    u.nombre AS usuario_nombre,
+                    u.correo AS usuario_correo
+                FROM Reservas AS r
+                JOIN Habitaciones AS h ON r.habitacion_id = h.id
+                JOIN Usuarios AS u ON r.usuario_id = u.id
+                ORDER BY r.fecha_reserva DESC`;
+            // No hay parámetros
+        } else {
+            // Cliente ve solo sus reservas
+            querySQL = `
+                SELECT 
+                    r.id,
+                    r.fecha_reserva, 
+                    r.num_noches, 
+                    r.huespedes, 
+                    r.ninos, 
+                    r.precio_total, 
+                    h.tipo AS habitacion_tipo 
+                FROM Reservas AS r
+                JOIN Habitaciones AS h ON r.habitacion_id = h.id
+                WHERE r.usuario_id = ?
+                ORDER BY r.fecha_reserva DESC`;
+            queryParams = [usuario_id];
+        }
+
+        const [reservas] = await db.query(querySQL, queryParams);
+
+        res.json(reservas);
 
     } catch (error) {
         res.status(500).json({
@@ -241,10 +273,89 @@ app.get('/api/mis-reservas', verificarToken, async (req, res) => {
 });
 
 // -----------------------------------------------------------------
-// NUEVO ENDPOINTS PARA RECUPERAR CONTRASEÑA
+// NUEVO: ENDPOINTS DE ADMINISTRACIÓN DE USUARIOS
 // -----------------------------------------------------------------
 
-// Endpoint 1: Buscar la pregunta del usuario
+// Endpoint 1: Obtener todos los usuarios (Solo Admin)
+app.get('/api/users', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const [usuarios] = await db.query(
+            'SELECT id, nombre, correo, rol FROM Usuarios ORDER BY id ASC'
+        );
+        res.json(usuarios);
+    } catch (error) {
+        res.status(500).json({ 
+            mensaje: 'Error en el servidor al obtener usuarios',
+            error: error.message 
+        });
+    }
+});
+
+// Endpoint 2: Actualizar usuario (Solo Admin)
+app.put('/api/users/:id', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { nombre, correo, rol } = req.body; 
+
+        if (!nombre || !correo || !rol) {
+            return res.status(400).json({ mensaje: 'Todos los campos son requeridos.' });
+        }
+        
+        await db.query(
+            'UPDATE Usuarios SET nombre = ?, correo = ?, rol = ? WHERE id = ?',
+            [nombre, correo, rol, userId]
+        );
+
+        res.json({ mensaje: 'Usuario actualizado exitosamente.' });
+
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ mensaje: 'El correo electrónico ya está registrado en otra cuenta.' });
+        }
+        res.status(500).json({ 
+            mensaje: 'Error en el servidor al actualizar usuario',
+            error: error.message 
+        });
+    }
+});
+// Endpoint 3: Eliminar usuario (Solo Admin)
+app.delete('/api/users/:id', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // OPCIONAL: Podrías añadir lógica para asegurar que el admin no se elimine a sí mismo
+        // if (req.usuario.id === parseInt(userId)) {
+        //     return res.status(400).json({ mensaje: 'No puedes eliminar tu propia cuenta.' });
+        // }
+        
+        // Primero, eliminar las reservas del usuario para evitar errores de llave foránea
+        // Esta es la forma más sencilla: eliminar la relación.
+        await db.query('DELETE FROM Reservas WHERE usuario_id = ?', [userId]);
+
+        // Luego, eliminar el usuario
+        const [resultado] = await db.query(
+            'DELETE FROM Usuarios WHERE id = ?',
+            [userId]
+        );
+        
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+        }
+
+        res.json({ mensaje: 'Usuario eliminado exitosamente.' });
+
+    } catch (error) {
+        res.status(500).json({ 
+            mensaje: 'Error en el servidor al eliminar usuario',
+            error: error.message 
+        });
+    }
+});
+
+// -----------------------------------------------------------------
+// ENDPOINTS PARA RECUPERAR CONTRASEÑA
+// -----------------------------------------------------------------
+
 app.post('/api/recuperar/buscar-pregunta', async (req, res) => {
     try {
         const { correo } = req.body;
@@ -258,7 +369,6 @@ app.post('/api/recuperar/buscar-pregunta', async (req, res) => {
             return res.status(404).json({ mensaje: 'Correo no encontrado.' });
         }
 
-        // Mapeamos el código a la pregunta real
         const mapPreguntas = {
             'mascota': '¿Cuál es el nombre de tu primera mascota?',
             'madre': '¿Cuál es el apellido de soltera de tu madre?',
@@ -275,7 +385,6 @@ app.post('/api/recuperar/buscar-pregunta', async (req, res) => {
     }
 });
 
-// Endpoint 2: Verificar la respuesta y generar token de reseteo
 app.post('/api/recuperar/verificar-respuesta', async (req, res) => {
     try {
         const { correo, respuesta } = req.body;
@@ -291,18 +400,16 @@ app.post('/api/recuperar/verificar-respuesta', async (req, res) => {
 
         const usuario = usuarios[0];
 
-        // Comparamos la respuesta del usuario con la encriptada
         const respuestaCorrecta = await bcrypt.compare(respuesta, usuario.respuesta_seguridad);
 
         if (!respuestaCorrecta) {
             return res.status(400).json({ mensaje: 'Respuesta incorrecta.' });
         }
 
-        // ¡Respuesta correcta! Creamos un token especial de reseteo
         const resetToken = jwt.sign(
-            { id: usuario.id, tipo: 'reset' }, // 'tipo' es importante
+            { id: usuario.id, tipo: 'reset' },
             JWT_SECRET,
-            { expiresIn: '10m' } // 10 minutos
+            { expiresIn: '10m' }
         );
 
         res.json({ 
@@ -315,7 +422,6 @@ app.post('/api/recuperar/verificar-respuesta', async (req, res) => {
     }
 });
 
-// Endpoint 3: Resetear la contraseña final
 app.post('/api/recuperar/reset-password', async (req, res) => {
     try {
         const { resetToken, nuevoPassword } = req.body;
@@ -324,7 +430,6 @@ app.post('/api/recuperar/reset-password', async (req, res) => {
             return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
         }
 
-        // 1. Verificamos el token de reseteo
         let payload;
         try {
             payload = jwt.verify(resetToken, JWT_SECRET);
@@ -332,16 +437,13 @@ app.post('/api/recuperar/reset-password', async (req, res) => {
             return res.status(401).json({ mensaje: 'Token inválido o expirado. Vuelve a empezar.' });
         }
 
-        // 2. Nos aseguramos que sea un token de 'reset'
         if (payload.tipo !== 'reset') {
             return res.status(401).json({ mensaje: 'Token no autorizado para esta acción.' });
         }
 
-        // 3. Todo en orden, encriptamos la nueva contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(nuevoPassword, salt);
 
-        // 4. Actualizamos en la BD
         await db.query(
             'UPDATE Usuarios SET password = ? WHERE id = ?',
             [passwordHash, payload.id]
@@ -353,6 +455,7 @@ app.post('/api/recuperar/reset-password', async (req, res) => {
         res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
     }
 });
+
 // 6. Iniciar el servidor (Esto se queda igual)
 app.listen(PORT, () => {
     console.log(`Servidor corriendo exitosamente en http://localhost:${PORT}`);

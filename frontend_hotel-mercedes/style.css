@@ -296,3 +296,47 @@ footer {
     text-align: center;
     /* El color se asignará por JS */
 }
+
+#listaUsuarios table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+#listaUsuarios th, #listaUsuarios td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle; /* Asegura el centrado vertical de la celda */
+}
+
+#listaUsuarios th {
+    background-color: #284b63; /* Color de la nav */
+    color: white;
+    font-weight: 600;
+}
+
+#listaUsuarios tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#listaUsuarios input, #listaUsuarios select {
+    padding: 5px;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Clase para ensanchar el main */
+.admin-mode-wide-main {
+    width: 90%; 
+    max-width: 1200px; 
+}
+
+#listaUsuarios td > div {
+    height: 100%;
+    align-items: center; 
+}
