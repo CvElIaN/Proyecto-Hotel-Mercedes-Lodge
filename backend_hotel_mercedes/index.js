@@ -1,5 +1,3 @@
-// Archivo: index.js
-
 // 1. Importar las dependencias
 const express = require('express');
 const cors = require('cors');
@@ -63,15 +61,15 @@ app.get('/api/prueba-db', async (req, res) => {
 
 
 // -----------------------------------------------------------------
-// ¡NUEVO! PASO 4.1: ENDPOINT DE REGISTRO DE USUARIO
+// ENDPOINT DE REGISTRO DE USUARIO (ACTUALIZADO)
 // -----------------------------------------------------------------
 app.post('/api/register', async (req, res) => {
     try {
-        // Obtenemos los datos del frontend
-        const { nombre, correo, password } = req.body;
+        // Obtenemos los datos del frontend (¡con los campos nuevos!)
+        const { nombre, correo, password, pregunta, respuesta } = req.body;
 
         // Validamos que vengan los datos
-        if (!nombre || !correo || !password) {
+        if (!nombre || !correo || !password || !pregunta || !respuesta) {
             return res.status(400).json({ mensaje: 'Todos los campos son requeridos.' });
         }
 
@@ -79,15 +77,15 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
         }
 
-        // 1. Encriptamos la contraseña
+        // 1. Encriptamos AMBAS cosas: contraseña y respuesta
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
+        const respuestaHash = await bcrypt.hash(respuesta, salt); // ¡NUEVO!
 
         // 2. Guardamos el nuevo usuario en la BD
-        // Omitimos el 'rol' para que tome el default 'cliente'
         const [resultado] = await db.query(
-            'INSERT INTO Usuarios (nombre, correo, password) VALUES (?, ?, ?)',
-            [nombre, correo, passwordHash]
+            'INSERT INTO Usuarios (nombre, correo, password, pregunta_seguridad, respuesta_seguridad) VALUES (?, ?, ?, ?, ?)',
+            [nombre, correo, passwordHash, pregunta, respuestaHash] // ¡ACTUALIZADO!
         );
 
         // 3. Respondemos con éxito
@@ -110,7 +108,7 @@ app.post('/api/register', async (req, res) => {
 
 
 // -----------------------------------------------------------------
-// ¡NUEVO! PASO 4.2: ENDPOINT DE LOGIN DE USUARIO (mi_cuenta.html)
+// ENDPOINT DE LOGIN DE USUARIO (mi_cuenta.html)
 // -----------------------------------------------------------------
 app.post('/api/login', async (req, res) => {
     try {
@@ -152,7 +150,8 @@ app.post('/api/login', async (req, res) => {
         res.json({
             mensaje: '¡Bienvenido, ' + usuario.nombre + '!',
             token: token,
-            nombre: usuario.nombre
+            nombre: usuario.nombre,
+            rol: usuario.rol // Lo incluimos para el futuro panel de admin
         });
 
     } catch (error) {
@@ -164,10 +163,8 @@ app.post('/api/login', async (req, res) => {
 });
 
 // -----------------------------------------------------------------
-// ¡NUEVO! ENDPOINT PARA CREAR RESERVAS
+// ENDPOINT PARA CREAR RESERVAS
 // -----------------------------------------------------------------
-// Usamos verificarToken como "guardia" de esta ruta.
-// Nadie puede acceder a /api/reservas sin un token válido.
 app.post('/api/reservas', verificarToken, async (req, res) => {
     try {
         // Obtenemos el ID del usuario desde el token (que puso el middleware)
@@ -177,8 +174,6 @@ app.post('/api/reservas', verificarToken, async (req, res) => {
         const { habitacion, fecha, noches, huespedes, ninos, precioTotal } = req.body;
         
         // --- Importante: Convertir datos ---
-        // La BD espera el ID de la habitación (1, 2, 3), no el texto ("standard", "suite")
-        // (Según tu bd_mercedes.sql)
         const mapHabitacionID = {
             'standard': 1,
             'suite': 2,
@@ -211,9 +206,8 @@ app.post('/api/reservas', verificarToken, async (req, res) => {
     }
 });
 // -----------------------------------------------------------------
-// ¡NUEVO! ENDPOINT PARA OBTENER LAS RESERVAS DE UN USUARIO
+// ENDPOINT PARA OBTENER LAS RESERVAS DE UN USUARIO
 // -----------------------------------------------------------------
-// También usamos el "guardia" para proteger esta ruta
 app.get('/api/mis-reservas', verificarToken, async (req, res) => {
     try {
         // El ID del usuario viene del token
@@ -243,6 +237,120 @@ app.get('/api/mis-reservas', verificarToken, async (req, res) => {
             mensaje: 'Error en el servidor al obtener las reservas',
             error: error.message
         });
+    }
+});
+
+// -----------------------------------------------------------------
+// NUEVO ENDPOINTS PARA RECUPERAR CONTRASEÑA
+// -----------------------------------------------------------------
+
+// Endpoint 1: Buscar la pregunta del usuario
+app.post('/api/recuperar/buscar-pregunta', async (req, res) => {
+    try {
+        const { correo } = req.body;
+        
+        const [usuarios] = await db.query(
+            'SELECT pregunta_seguridad FROM Usuarios WHERE correo = ?',
+            [correo]
+        );
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({ mensaje: 'Correo no encontrado.' });
+        }
+
+        // Mapeamos el código a la pregunta real
+        const mapPreguntas = {
+            'mascota': '¿Cuál es el nombre de tu primera mascota?',
+            'madre': '¿Cuál es el apellido de soltera de tu madre?',
+            'ciudad': '¿En qué ciudad naciste?'
+        };
+
+        const preguntaKey = usuarios[0].pregunta_seguridad;
+        const preguntaTexto = mapPreguntas[preguntaKey] || 'Se encontró un error en su pregunta.';
+
+        res.json({ pregunta: preguntaTexto });
+
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+    }
+});
+
+// Endpoint 2: Verificar la respuesta y generar token de reseteo
+app.post('/api/recuperar/verificar-respuesta', async (req, res) => {
+    try {
+        const { correo, respuesta } = req.body;
+
+        const [usuarios] = await db.query(
+            'SELECT * FROM Usuarios WHERE correo = ?',
+            [correo]
+        );
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({ mensaje: 'Correo no encontrado.' });
+        }
+
+        const usuario = usuarios[0];
+
+        // Comparamos la respuesta del usuario con la encriptada
+        const respuestaCorrecta = await bcrypt.compare(respuesta, usuario.respuesta_seguridad);
+
+        if (!respuestaCorrecta) {
+            return res.status(400).json({ mensaje: 'Respuesta incorrecta.' });
+        }
+
+        // ¡Respuesta correcta! Creamos un token especial de reseteo
+        const resetToken = jwt.sign(
+            { id: usuario.id, tipo: 'reset' }, // 'tipo' es importante
+            JWT_SECRET,
+            { expiresIn: '10m' } // 10 minutos
+        );
+
+        res.json({ 
+            mensaje: '¡Respuesta correcta!',
+            resetToken: resetToken 
+        });
+
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+    }
+});
+
+// Endpoint 3: Resetear la contraseña final
+app.post('/api/recuperar/reset-password', async (req, res) => {
+    try {
+        const { resetToken, nuevoPassword } = req.body;
+
+        if (nuevoPassword.length < 6) {
+            return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
+        }
+
+        // 1. Verificamos el token de reseteo
+        let payload;
+        try {
+            payload = jwt.verify(resetToken, JWT_SECRET);
+        } catch (err) {
+            return res.status(401).json({ mensaje: 'Token inválido o expirado. Vuelve a empezar.' });
+        }
+
+        // 2. Nos aseguramos que sea un token de 'reset'
+        if (payload.tipo !== 'reset') {
+            return res.status(401).json({ mensaje: 'Token no autorizado para esta acción.' });
+        }
+
+        // 3. Todo en orden, encriptamos la nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(nuevoPassword, salt);
+
+        // 4. Actualizamos en la BD
+        await db.query(
+            'UPDATE Usuarios SET password = ? WHERE id = ?',
+            [passwordHash, payload.id]
+        );
+
+        res.json({ mensaje: '¡Contraseña actualizada exitosamente!' });
+
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
     }
 });
 // 6. Iniciar el servidor (Esto se queda igual)

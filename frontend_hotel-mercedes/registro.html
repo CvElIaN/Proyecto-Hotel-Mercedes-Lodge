@@ -39,6 +39,17 @@
 
             <label for="confirmPassRegistro">Confirmar Contraseña</label>
             <input type="password" id="confirmPassRegistro" required>
+            
+            <label for="preguntaRegistro">Pregunta de Seguridad</label>
+            <select id="preguntaRegistro" required>
+                <option value="">Seleccione una pregunta...</option>
+                <option value="mascota">¿Cuál es el nombre de tu primera mascota?</option>
+                <option value="madre">¿Cuál es el apellido de soltera de tu madre?</option>
+                <option value="ciudad">¿En qué ciudad naciste?</option>
+            </select>
+
+            <label for="respuestaRegistro">Respuesta de Seguridad</label>
+            <input type="text" id="respuestaRegistro" required>
 
             <p id="mensajeRegistro"></p>
 

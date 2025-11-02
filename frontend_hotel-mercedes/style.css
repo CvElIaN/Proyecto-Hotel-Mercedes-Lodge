@@ -289,3 +289,10 @@ footer {
     font-size: 1.1em;
     margin-top: 10px;
 }
+
+#mensajeRecuperar {
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
+    /* El color se asignará por JS */
+}

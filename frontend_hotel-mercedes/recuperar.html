@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercedes Lodge - Recuperar Contraseña</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Mercedes Lodge</h1>
+        <p class="tagline">Hotel</p>
+    </header>
+
+    <nav>
+        <a href="mi_cuenta.html">Mi Cuenta</a>
+        <a href="reserva_hotel.html">Reservar</a>
+        <a href="nosotros.html">Nosotros</a>
+    </nav>
+
+    <main>
+        <h2>Recuperar Contraseña</h2>
+
+        <form id="formRecuperar" novalidate>
+            
+            <div id="paso1_correo">
+                <label for="correoRecuperar">Ingresa tu correo electrónico</label>
+                <input type="email" id="correoRecuperar" required>
+            </div>
+
+            <div id="paso2_pregunta" class="hidden">
+                <label id="labelPregunta">Tu pregunta de seguridad:</label>
+                <input type="text" id="respuestaRecuperar" required>
+            </div>
+
+            <div id="paso3_password" class="hidden">
+                <label for="passRecuperar">Ingresa tu nueva contraseña</label>
+                <input type="password" id="passRecuperar" required>
+                
+                <label for="confirmPassRecuperar">Confirma tu nueva contraseña</label>
+                <input type="password" id="confirmPassRecuperar" required>
+            </div>
+
+            <p id="mensajeRecuperar"></p>
+
+            <button type="submit" id="btnRecuperar">Siguiente</button>
+        </form>
+        
+    </main>
+
+    <footer>
+        © 2025 Suit Hotel Mercede Lodge.
+    </footer>
+
+    <script src="script.js"></script>
+    </body>
+</html>

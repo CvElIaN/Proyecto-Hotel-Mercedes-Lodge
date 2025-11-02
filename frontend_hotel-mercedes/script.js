@@ -4,8 +4,6 @@ const API_URL = 'http://localhost:3001/api';
 /*
 =========================================
  CÓDIGO PARA EL FORMULARIO DE RESERVA
- (Por ahora, lo dejamos como estaba,
-  luego lo conectaremos)
 =========================================
 */
 function calcularPrecio() {
@@ -131,6 +129,7 @@ if (formLogin) {
                 // ¡IMPORTANTE! Guardamos el token Y el nombre
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userName', data.nombre); // <-- NUEVO
+                localStorage.setItem('userRole', data.rol); // <-- ROL AÑADIDO
 
                 // Mostramos el panel de usuario
                 mostrarInfoUsuario(data.token, data.nombre);
@@ -152,10 +151,11 @@ if (formLogin) {
     document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('token');
         const nombre = localStorage.getItem('userName');
+        const rol = localStorage.getItem('userRole');
 
         // Si estamos en mi_cuenta.html Y tenemos token, mostramos el panel
         if (token && nombre && document.getElementById('zonaLogin')) {
-            mostrarInfoUsuario(token, nombre);
+            mostrarInfoUsuario(token, nombre, rol);
         }
     });
 
@@ -166,6 +166,7 @@ if (formLogin) {
             // Borramos los datos
             localStorage.removeItem('token');
             localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
 
             // Mostramos el login y ocultamos el panel
             document.getElementById('zonaLogin').classList.remove('hidden');
@@ -188,9 +189,13 @@ if (formRegistro) {
         const nombre = document.getElementById("nombreRegistro").value;
         const correo = document.getElementById("correoRegistro").value;
         const pass = document.getElementById("passRegistro").value;
-        const mensajeRegistro = document.getElementById("mensajeRegistro");
-
         const confirmPass = document.getElementById("confirmPassRegistro").value;
+        
+        // ¡NUEVO! Obtener los valores de las preguntas
+        const pregunta = document.getElementById("preguntaRegistro").value;
+        const respuesta = document.getElementById("respuestaRegistro").value;
+        
+        const mensajeRegistro = document.getElementById("mensajeRegistro");
 
         if (pass !== confirmPass) {
             mensajeRegistro.textContent = "Las contraseñas no coinciden.";
@@ -208,7 +213,9 @@ if (formRegistro) {
                 body: JSON.stringify({
                     nombre: nombre,
                     correo: correo,
-                    password: pass
+                    password: pass,
+                    pregunta: pregunta,   // ¡NUEVO!
+                    respuesta: respuesta  // ¡NUEVO!
                 })
             });
             
@@ -244,7 +251,7 @@ if (formRegistro) {
 // NUEVAS FUNCIONES PARA EL PANEL DE "MI CUENTA"
 // =======================================================
 
-function mostrarInfoUsuario(token, nombre) {
+function mostrarInfoUsuario(token, nombre, rol) {
     // 1. Ocultar el formulario de login
     document.getElementById('zonaLogin').classList.add('hidden');
     
@@ -311,4 +318,148 @@ async function cargarReservas(token) {
         listaReservasDiv.innerHTML = '<p>Error de conexión al cargar tus reservas.</p>';
         console.error('Error cargando reservas:', error);
     }
+}
+
+// =======================================================
+// CÓDIGO PARA RECUPERAR CONTRASEÑA (De la fase anterior)
+// =======================================================
+
+const formRecuperar = document.getElementById('formRecuperar');
+
+if (formRecuperar) {
+    // Variables para guardar el estado del formulario
+    let pasoActual = 1; // 1: correo, 2: respuesta, 3: password
+    let correoRecuperar = '';
+    let tokenRecuperar = '';
+
+    const mensajeRecuperar = document.getElementById('mensajeRecuperar');
+    const btnRecuperar = document.getElementById('btnRecuperar');
+
+    // Referencias a los pasos
+    const paso1 = document.getElementById('paso1_correo');
+    const paso2 = document.getElementById('paso2_pregunta');
+    const paso3 = document.getElementById('paso3_password');
+    
+    // Referencias a los inputs
+    const inputCorreo = document.getElementById('correoRecuperar');
+    const inputRespuesta = document.getElementById('respuestaRecuperar');
+    const labelPregunta = document.getElementById('labelPregunta');
+    const inputPass = document.getElementById('passRecuperar');
+    const inputConfirmPass = document.getElementById('confirmPassRecuperar');
+
+
+    formRecuperar.addEventListener('submit', async function(event) {
+        event.preventDefault(); 
+        mensajeRecuperar.textContent = ''; // Limpiamos mensajes
+        // Eliminamos el console.log de diagnóstico aquí
+
+        // Desactivamos el botón para evitar clics múltiples
+        btnRecuperar.disabled = true;
+        btnRecuperar.textContent = 'Cargando...';
+
+        try {
+            if (pasoActual === 1) {
+                // --- PASO 1: BUSCAR PREGUNTA ---
+                correoRecuperar = inputCorreo.value;
+                const response = await fetch(`${API_URL}/recuperar/buscar-pregunta`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo: correoRecuperar })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Éxito: Mostramos la pregunta
+                    labelPregunta.textContent = data.pregunta;
+                    paso1.classList.add('hidden');
+                    paso2.classList.remove('hidden');
+                    pasoActual = 2;
+                    btnRecuperar.textContent = 'Verificar Respuesta';
+                } else {
+                    // Error: (ej. Correo no encontrado)
+                    throw new Error(data.mensaje);
+                }
+
+            } else if (pasoActual === 2) {
+                // --- PASO 2: VERIFICAR RESPUESTA ---
+                const respuesta = inputRespuesta.value;
+                const response = await fetch(`${API_URL}/recuperar/verificar-respuesta`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo: correoRecuperar, respuesta: respuesta })
+                });
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Éxito: Tenemos token, pasamos a pedir contraseña
+                    tokenRecuperar = data.resetToken;
+                    paso2.classList.add('hidden');
+                    paso3.classList.remove('hidden');
+                    pasoActual = 3;
+                    btnRecuperar.textContent = 'Actualizar Contraseña';
+                } else {
+                    // Error: (ej. Respuesta incorrecta)
+                    throw new Error(data.mensaje);
+                }
+
+            } else if (pasoActual === 3) {
+                // --- PASO 3: RESETEAR CONTRASEÑA ---
+                const nuevoPassword = inputPass.value;
+                const confirmPassword = inputConfirmPass.value;
+
+                if (nuevoPassword !== confirmPassword) {
+                    throw new Error('Las contraseñas no coinciden.');
+                }
+
+                const response = await fetch(`${API_URL}/recuperar/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resetToken: tokenRecuperar, nuevoPassword: nuevoPassword })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // ¡TODO SALIÓ BIEN!
+                    mensajeRecuperar.textContent = data.mensaje;
+                    mensajeRecuperar.style.color = '#007700';
+                    formRecuperar.reset();
+                    btnRecuperar.textContent = '¡Éxito!';
+                    
+                    // Redireccionamos
+                    setTimeout(() => {
+                        window.location.href = 'mi_cuenta.html';
+                    }, 2000); 
+
+                    // Importante: No seguimos ejecutando código del finally
+                    return; 
+
+                } else {
+                    // Error: (ej. Token expirado)
+                    throw new Error(data.mensaje);
+                }
+            }
+        } catch (error) {
+            // Manejador de errores general
+            mensajeRecuperar.textContent = error.message;
+            mensajeRecuperar.style.color = '#990000';
+            
+            // Si el error es por token expirado, reiniciamos el formulario
+            if (error.message.includes('expirado')) {
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+
+        // Reactivamos el botón si falló
+        btnRecuperar.disabled = false;
+        if (pasoActual === 1) {
+            btnRecuperar.textContent = 'Siguiente';
+        } else if (pasoActual === 2) {
+            btnRecuperar.textContent = 'Verificar Respuesta';
+        } else if (pasoActual === 3) {
+            btnRecuperar.textContent = 'Actualizar Contraseña';
+        }
+    });
 }
