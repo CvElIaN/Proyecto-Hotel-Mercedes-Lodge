@@ -427,3 +427,25 @@ footer {
         /* 2. Imagen de fondo */
         url('Gestion_de_reservas.png');
 }
+
+/* --- Estilo para el botón "Volver" del panel --- */
+.btn-volver {
+    display: inline-block;
+    width: auto; /* No ocupa el 100% */
+    padding: 10px 18px;
+    margin-bottom: 25px; /* Separa el botón del título h2 */
+    background: var(--color-acento-oscuro);
+    color: var(--color-blanco);
+    border: none;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-volver:hover {
+    background: var(--color-primario);
+}
