@@ -1,6 +1,41 @@
 // Definimos la URL de nuestro backend
 const API_URL = 'http://localhost:3001/api';
+/**
+ * Función "envoltorio" (wrapper) para todas las llamadas a nuestra API.
+ * Se encarga de:
+ * 1. Añadir el prefijo API_URL al endpoint.
+ * 2. Añadir el token de autenticación (si es necesario).
+ * 3. Convertir el 'body' a JSON y añadir el 'Content-Type' automáticamente.
+ * 4. Lanzar un error si el token es requerido pero no se encuentra.
+ */
+async function apiFetch(endpoint, options = {}, requiresAuth = true) {
+    // 1. Configurar los encabezados
+    const headers = options.headers || {};
 
+    if (requiresAuth) {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            // Lanzamos un error que el 'try/catch' de la función que llama
+            // (ej. formReserva) podrá atrapar.
+            throw new Error('No se encontró token de autenticación. Por favor, inicie sesión.');
+        }
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // 2. Si el body es un objeto, lo convertimos a JSON
+    if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+        options.body = JSON.stringify(options.body);
+        headers['Content-Type'] = 'application/json';
+    }
+
+    // 3. Unir todo y llamar a fetch
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options, // Esto incluye method, body (ya stringified), etc.
+        headers: headers
+    });
+
+    return response;
+}
 /*
 =========================================
  CÓDIGO PARA EL FORMULARIO DE RESERVA
@@ -34,14 +69,7 @@ if (document.getElementById("formReserva")) {
         event.preventDefault(); 
         
         const mensajeElemento = document.getElementById("mensaje");
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            mensajeElemento.textContent = "Error: Debes iniciar sesión para poder reservar.";
-            mensajeElemento.style.color = "#990000";
-            return;
-        }
-
+        
         const habitacion = document.getElementById("habitacion").value;
         const fecha = document.getElementById("fecha").value;
         const noches = parseInt(document.getElementById("noches").value);
@@ -52,20 +80,16 @@ if (document.getElementById("formReserva")) {
         const precioTotal = Number(precioOutput.replace('S/', ''));
         
         try {
-            const response = await fetch(`${API_URL}/reservas`, {
+            const response = await apiFetch('/reservas', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({
+                body: {
                     habitacion: habitacion,
                     fecha: fecha,
                     noches: noches,
                     huespedes: huespedes,
                     ninos: ninos,
                     precioTotal: precioTotal
-                })
+                }
             });
 
             const data = await response.json();
@@ -92,7 +116,7 @@ if (document.getElementById("formReserva")) {
             }
 
         } catch (error) {
-            mensajeElemento.textContent = "Error de conexión con el servidor.";
+            mensajeElemento.textContent = error.message;
             mensajeElemento.style.color = "#990000";
             console.error('Error al reservar:', error);
         }
@@ -110,11 +134,10 @@ if (formLogin) {
         const mensajeLogin = document.getElementById("mensajeLogin");
 
         try {
-            const response = await fetch(`${API_URL}/login`, {
+            const response = await apiFetch('/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ correo: correo, password: pass })
-            });
+                body: { correo: correo, password: pass }
+            }, false);
 
             const data = await response.json();
 
@@ -202,19 +225,16 @@ if (formRegistro) {
         }
 
         try {
-            const response = await fetch(`${API_URL}/register`, {
+            const response = await apiFetch('/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
+                body: {
                     nombre: nombre,
                     correo: correo,
                     password: pass,
                     pregunta: pregunta,
                     respuesta: respuesta
-                })
-            });
+                }
+            }, false);
             
             const data = await response.json();
 
@@ -279,12 +299,7 @@ async function cargarReservas(token) {
     listaReservasDiv.innerHTML = '<p>Cargando reservas...</p>';
 
     try {
-        const response = await fetch(`${API_URL}/mis-reservas`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}` 
-            }
-        });
+        const response = await apiFetch('/mis-reservas');
 
         if (!response.ok) {
             listaReservasDiv.innerHTML = '<p>Error al cargar reservas. Intenta iniciar sesión de nuevo.</p>';
@@ -348,12 +363,7 @@ async function cargarPanelAdmin(token) {
     listaUsuariosDiv.innerHTML = '<p>Cargando usuarios...</p>';
 
     try {
-        const response = await fetch(`${API_URL}/users`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}` 
-            }
-        });
+        const response = await apiFetch('/users');
 
         if (!response.ok) {
             listaUsuariosDiv.innerHTML = '<p>Error al cargar el listado de usuarios.</p>';
@@ -441,13 +451,9 @@ async function actualizarUsuario(id, token) {
     button.disabled = true;
 
     try {
-        const response = await fetch(`${API_URL}/users/${id}`, {
+        const response = await apiFetch(`/users/${id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ nombre, correo, rol })
+            body: { nombre, correo, rol }
         });
 
         const data = await response.json();
@@ -489,11 +495,8 @@ async function eliminarUsuario(id, token) {
     button.disabled = true;
 
     try {
-        const response = await fetch(`${API_URL}/users/${id}`, {
-            method: 'DELETE', // Método DELETE para eliminar
-            headers: {
-                'Authorization': `Bearer ${token}` 
-            }
+        const response = await apiFetch(`/users/${id}`, {
+            method: 'DELETE'
         });
 
         const data = await response.json();
@@ -550,11 +553,8 @@ if (formRecuperar) {
         try {
             if (pasoActual === 1) {
                 correoRecuperar = inputCorreo.value;
-                const response = await fetch(`${API_URL}/recuperar/buscar-pregunta`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ correo: correoRecuperar })
-                });
+                const response = await apiFetch('/recuperar/buscar-pregunta', { 
+                    method: 'POST', body: { correo: correoRecuperar } }, false);
 
                 const data = await response.json();
 
@@ -570,11 +570,9 @@ if (formRecuperar) {
 
             } else if (pasoActual === 2) {
                 const respuesta = inputRespuesta.value;
-                const response = await fetch(`${API_URL}/recuperar/verificar-respuesta`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ correo: correoRecuperar, respuesta: respuesta })
-                });
+                const response = await apiFetch('/recuperar/verificar-respuesta', { 
+                    method: 'POST', body: { correo: correoRecuperar, respuesta: respuesta }},
+                    false);
                 
                 const data = await response.json();
 
@@ -596,11 +594,9 @@ if (formRecuperar) {
                     throw new Error('Las contraseñas no coinciden.');
                 }
 
-                const response = await fetch(`${API_URL}/recuperar/reset-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ resetToken: tokenRecuperar, nuevoPassword: nuevoPassword })
-                });
+                const response = await apiFetch('/recuperar/reset-password', { 
+                    method: 'POST', body: { resetToken: tokenRecuperar, nuevoPassword: nuevoPassword } 
+                }, false);
 
                 const data = await response.json();
                 

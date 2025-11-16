@@ -1,3 +1,4 @@
+require('dotenv').config();
 // Archivo: index.js
 
 // 1. Importar las dependencias
@@ -43,7 +44,7 @@ function verificarAdmin(req, res, next) {
 // 2. Configuración inicial
 const app = express();
 const PORT = 3001;
-const JWT_SECRET = 'tu_secreto_muy_seguro_aqui'; // <-- Cambia esto por una frase secreta
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // 3. Middlewares
 app.use(cors());
