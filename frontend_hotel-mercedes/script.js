@@ -166,70 +166,89 @@ const formLogin = document.getElementById("formLogin");
 
 if (formLogin) {
     formLogin.addEventListener("submit", async function(event) {
-        // ... (código de captura de variables) ...
-        
+        event.preventDefault(); // Previene que el formulario recargue la página
+
+        const correo = document.getElementById("correoLogin").value;
+        const pass = document.getElementById("passLogin").value;
+        const mensajeLogin = document.getElementById("mensajeLogin");
+
+        // 1. Capturamos el botón
         const btnLogin = formLogin.querySelector('button[type="submit"]');
+        
+        // 2. Deshabilitamos el botón y limpiamos mensajes
         btnLogin.disabled = true;
         btnLogin.textContent = 'Ingresando...';
-        mensajeLogin.textContent = ''; 
+        mensajeLogin.textContent = ''; // Limpiamos mensajes antiguos
 
         try {
-            // ... (código de apiFetch) ...
-            
+            const response = await apiFetch('/login', {
+                method: 'POST',
+                body: { correo: correo, password: pass }
+            }, false);
+
             const data = await response.json();
 
             if (response.ok) {
-                // ... (código de éxito, está bien)
+                mensajeLogin.textContent = data.mensaje;
+                mensajeLogin.style.color = "var(--color-exito)"; // Usando CSS variable
+                formLogin.reset();
+                
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userName', data.nombre); 
+                localStorage.setItem('userRole', data.rol); 
+
                 mostrarInfoUsuario(data.token, data.nombre, data.rol); 
+                // No reactivamos el botón aquí porque la vista va a cambiar
 
             } else {
                 mensajeLogin.textContent = data.mensaje;
-                mensajeLogin.style.color = "var(--color-error)";
+                mensajeLogin.style.color = "var(--color-error)"; // Usando CSS variable
                 
                 // --- ¡CORRECCIÓN 1 AQUÍ! ---
+                // Reactivamos el botón si el login falla
                 btnLogin.disabled = false;
                 btnLogin.textContent = 'Ingresar';
             }
 
         } catch (error) {
             mensajeLogin.textContent = "Error de conexión. Inténtelo más tarde.";
-            mensajeLogin.style.color = "var(--color-error)";
+            mensajeLogin.style.color = "var(--color-error)"; // Usando CSS variable
             console.error('Error en el login:', error);
 
             // --- ¡CORRECCIÓN 2 AQUÍ! ---
+            // Reactivamos el botón si hay un error de red
             btnLogin.disabled = false;
             btnLogin.textContent = 'Ingresar';
         }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const token = localStorage.getItem('token');
-        const nombre = localStorage.getItem('userName');
-        const rol = localStorage.getItem('userRole'); 
+    // --- ESTA ES LA LÓGICA QUE ARREGLARÁ EL BUG #3 MÁS ADELANTE ---
+    // (La incluimos ahora porque ya estaba dentro de tu bloque if (formLogin))
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    const nombre = localStorage.getItem('userName');
+    const rol = localStorage.getItem('userRole'); 
+    // 1. Lógica para la página mi_cuenta.html
+    if (token && nombre && document.getElementById('zonaLogin')) {
+        mostrarInfoUsuario(token, nombre, rol); 
+    }
+    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
 
-        // 1. Lógica para la página mi_cuenta.html
-        if (token && nombre && document.getElementById('zonaLogin')) {
-            mostrarInfoUsuario(token, nombre, rol); 
-        }
-
-        // --- ¡CORRECCIÓN 4 AQUÍ! ---
-        
-        // 2. Lógica para la página gestion_usuarios.html
-        // Comprueba si existe el div #listaUsuarios Y NO existe #zonaLogin
-        if (document.getElementById('listaUsuarios') && !document.getElementById('zonaLogin')) {
-            // Aplicar clase ancha solo en esta página
-            document.querySelector('main').classList.add('admin-mode-wide-main');
-            cargarPanelAdmin(token);
-        }
-
-        // 3. Lógica para la página gestion_reservas.html
-        if (document.getElementById('tituloReservasAdmin')) {
-             // Aplicar clase ancha solo en esta página
-             document.querySelector('main').classList.add('admin-mode-wide-main');
-            cargarReservas(token);
-        }
+    // 2. Lógica para la página gestion_usuarios.html
+    // Comprueba si existe el div #listaUsuarios Y NO existe #zonaLogin
+    if (document.getElementById('listaUsuarios') && !document.getElementById('zonaLogin')) {
+        // Aplicar clase ancha solo en esta página
+        document.querySelector('main').classList.add('admin-mode-wide-main');
+        cargarPanelAdmin(token);
+    }
+    // 3. Lógica para la página gestion_reservas.html
+    if (document.getElementById('tituloReservasAdmin')) {
+         // Aplicar clase ancha solo en esta página
+         document.querySelector('main').classList.add('admin-mode-wide-main');
+        cargarReservas(token);
+    }
     });
-
     const btnCerrarSesion = document.getElementById('btnCerrarSesion');
     if(btnCerrarSesion) {
         btnCerrarSesion.addEventListener('click', () => {
@@ -254,8 +273,6 @@ if (formLogin) {
             document.getElementById('mensajeLogin').textContent = '';
         });
     }
-}
-
 const formRegistro = document.getElementById("formRegistro");
 
 if (formRegistro) {
