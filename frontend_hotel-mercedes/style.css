@@ -365,7 +365,7 @@ footer {
 #listaUsuarios td > div {
     height: 100%;
     align-items: center; 
-
+}
 /* --- Estilos para el Menú de Admin (Tarjetas) --- */
 .admin-menu {
     display: flex;
@@ -426,5 +426,4 @@ footer {
         linear-gradient(rgba(var(--color-primario-rgb), 0.6), rgba(var(--color-primario-rgb), 0.8)),
         /* 2. Imagen de fondo */
         url('Gestion_de_reservas.png');
-}
 }

@@ -166,61 +166,41 @@ const formLogin = document.getElementById("formLogin");
 
 if (formLogin) {
     formLogin.addEventListener("submit", async function(event) {
-        event.preventDefault(); 
-
-        const correo = document.getElementById("correoLogin").value;
-        const pass = document.getElementById("passLogin").value;
-        const mensajeLogin = document.getElementById("mensajeLogin");
-
-        // 1. Capturamos el botón
-        const btnLogin = formLogin.querySelector('button[type="submit"]');
+        // ... (código de captura de variables) ...
         
-        // 2. Deshabilitamos el botón y limpiamos mensajes
+        const btnLogin = formLogin.querySelector('button[type="submit"]');
         btnLogin.disabled = true;
         btnLogin.textContent = 'Ingresando...';
-        mensajeLogin.textContent = ''; // Limpiamos mensajes antiguos
+        mensajeLogin.textContent = ''; 
 
         try {
-            const response = await apiFetch('/login', {
-                method: 'POST',
-                body: { correo: correo, password: pass }
-            }, false);
-
+            // ... (código de apiFetch) ...
+            
             const data = await response.json();
 
             if (response.ok) {
-                mensajeLogin.textContent = data.mensaje;
-                mensajeLogin.style.color = "var(--color-exito)"; // Usando CSS variable
-                formLogin.reset();
-                
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('userName', data.nombre); 
-                localStorage.setItem('userRole', data.rol); 
-
+                // ... (código de éxito, está bien)
                 mostrarInfoUsuario(data.token, data.nombre, data.rol); 
-                // No reactivamos el botón aquí porque la vista va a cambiar
 
             } else {
                 mensajeLogin.textContent = data.mensaje;
-                mensajeLogin.style.color = "var(--color-error)"; // Usando CSS variable
+                mensajeLogin.style.color = "var(--color-error)";
                 
-                // --- ¡CORRECCIÓN AQUÍ! ---
-                // Reactivamos el botón si el login falla
+                // --- ¡CORRECCIÓN 1 AQUÍ! ---
                 btnLogin.disabled = false;
                 btnLogin.textContent = 'Ingresar';
             }
 
         } catch (error) {
             mensajeLogin.textContent = "Error de conexión. Inténtelo más tarde.";
-            mensajeLogin.style.color = "var(--color-error)"; // Usando CSS variable
+            mensajeLogin.style.color = "var(--color-error)";
             console.error('Error en el login:', error);
 
-            // --- ¡CORRECCIÓN AQUÍ! ---
-            // Reactivamos el botón si hay un error de red
+            // --- ¡CORRECCIÓN 2 AQUÍ! ---
             btnLogin.disabled = false;
             btnLogin.textContent = 'Ingresar';
         }
-        });
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('token');
@@ -232,6 +212,8 @@ if (formLogin) {
             mostrarInfoUsuario(token, nombre, rol); 
         }
 
+        // --- ¡CORRECCIÓN 4 AQUÍ! ---
+        
         // 2. Lógica para la página gestion_usuarios.html
         // Comprueba si existe el div #listaUsuarios Y NO existe #zonaLogin
         if (document.getElementById('listaUsuarios') && !document.getElementById('zonaLogin')) {
