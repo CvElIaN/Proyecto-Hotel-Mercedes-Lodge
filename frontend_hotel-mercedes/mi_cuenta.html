@@ -50,12 +50,22 @@
             <h2 id="saludoUsuario"></h2>
             <button id="btnCerrarSesion" type="button">Cerrar Sesión</button>
             
-            <div id="seccionAdmin" class="hidden">
+        <div id="seccionAdmin" class="hidden">
                 <hr>
-                <h3>Gestión de Usuarios</h3>
-                <div id="listaUsuarios">
-                    </div>
+                <h3>Panel de Administrador</h3>
+                <div class="admin-menu">
+                    <a href="gestion_usuarios.html" class="admin-card card-usuarios">
+                        <h4>Gestionar Usuarios</h4>
+                    </a>
+                    <a href="gestion_reservas.html" class="admin-card card-reservas">
+                        <h4>Ver Reservas</h4>
+                    </a>
+                </div>
                 <hr>
+            </div>
+
+        <h3 id="tituloReservas">Mis Reservas</h3> 
+        <div id="listaReservas">
             </div>
             
             <h3 id="tituloReservas">Mis Reservas</h3> 

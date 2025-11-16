@@ -59,9 +59,40 @@ function calcularPrecio() {
     document.getElementById("precio").value = "S/" + precioFinal;
 }
 
+function poblarSelectsReserva() {
+    // Se puede cambiar cuando se quiera
+    const maxNoches = 5;
+    const maxAdultos = 2;
+    const maxNinos = 3;
+    // ---------------------------------------------
+
+    const selectNoches = document.getElementById('noches');
+    const selectHuespedes = document.getElementById('huespedes');
+    const selectNinos = document.getElementById('ninos');
+
+    // Poblar noches (de 1 a maxNoches)
+    for (let i = 1; i <= maxNoches; i++) {
+        // new Option("Texto que ve el usuario", "valor que se envía")
+        const option = new Option(`${i} ${i === 1 ? 'noche' : 'noches'}`, i);
+        selectNoches.add(option);
+    }
+
+    // Poblar huéspedes (de 1 a maxAdultos)
+    for (let i = 1; i <= maxAdultos; i++) {
+        const option = new Option(`${i} ${i === 1 ? 'adulto' : 'adultos'}`, i);
+        selectHuespedes.add(option);
+    }
+
+    // Poblar niños (de 0 a maxNinos)
+    for (let i = 0; i <= maxNinos; i++) {
+        const option = new Option(`${i} ${i === 0 ? 'niño' : 'niños'}`, i);
+        selectNinos.add(option);
+    }
+}
+
 if (document.getElementById("formReserva")) {
     document.getElementById("fecha").min = new Date().toISOString().split("T")[0];
-    
+    poblarSelectsReserva();
     document.getElementById("habitacion").addEventListener("change", calcularPrecio);
     document.getElementById("noches").addEventListener("change", calcularPrecio);
     
@@ -78,7 +109,11 @@ if (document.getElementById("formReserva")) {
         
         const precioOutput = document.getElementById("precio").value;
         const precioTotal = Number(precioOutput.replace('S/', ''));
-        
+
+        const btnReserva = document.getElementById("formReserva").querySelector('button[type="submit"]');
+        btnReserva.disabled = true;
+        btnReserva.textContent = 'Confirmando...';
+
         try {
             const response = await apiFetch('/reservas', {
                 method: 'POST',
@@ -113,12 +148,16 @@ if (document.getElementById("formReserva")) {
                    mensajeElemento.textContent = data.mensaje;
                 }
                 mensajeElemento.style.color = "#990000";
+                btnReserva.disabled = false;
+                btnReserva.textContent = 'Confirmar Reserva';
             }
 
         } catch (error) {
             mensajeElemento.textContent = error.message;
             mensajeElemento.style.color = "#990000";
             console.error('Error al reservar:', error);
+            btnReserva.disabled = false;
+            btnReserva.textContent = 'Confirmar Reserva';
         }
     });
 }
@@ -133,6 +172,14 @@ if (formLogin) {
         const pass = document.getElementById("passLogin").value;
         const mensajeLogin = document.getElementById("mensajeLogin");
 
+        // 1. Capturamos el botón
+        const btnLogin = formLogin.querySelector('button[type="submit"]');
+        
+        // 2. Deshabilitamos el botón y limpiamos mensajes
+        btnLogin.disabled = true;
+        btnLogin.textContent = 'Ingresando...';
+        mensajeLogin.textContent = ''; // Limpiamos mensajes antiguos
+
         try {
             const response = await apiFetch('/login', {
                 method: 'POST',
@@ -143,35 +190,61 @@ if (formLogin) {
 
             if (response.ok) {
                 mensajeLogin.textContent = data.mensaje;
-                mensajeLogin.style.color = "#007700";
+                mensajeLogin.style.color = "var(--color-exito)"; // Usando CSS variable
                 formLogin.reset();
                 
-                // ¡IMPORTANTE! Guardamos el token, el nombre Y el ROL
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userName', data.nombre); 
-                localStorage.setItem('userRole', data.rol); // <-- NUEVO
+                localStorage.setItem('userRole', data.rol); 
 
-                mostrarInfoUsuario(data.token, data.nombre, data.rol); // <-- ROL AÑADIDO
+                mostrarInfoUsuario(data.token, data.nombre, data.rol); 
+                // No reactivamos el botón aquí porque la vista va a cambiar
 
             } else {
                 mensajeLogin.textContent = data.mensaje;
-                mensajeLogin.style.color = "#990000";
+                mensajeLogin.style.color = "var(--color-error)"; // Usando CSS variable
+                
+                // --- ¡CORRECCIÓN AQUÍ! ---
+                // Reactivamos el botón si el login falla
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Ingresar';
             }
 
         } catch (error) {
             mensajeLogin.textContent = "Error de conexión. Inténtelo más tarde.";
-            mensajeLogin.style.color = "#990000";
+            mensajeLogin.style.color = "var(--color-error)"; // Usando CSS variable
             console.error('Error en el login:', error);
+
+            // --- ¡CORRECCIÓN AQUÍ! ---
+            // Reactivamos el botón si hay un error de red
+            btnLogin.disabled = false;
+            btnLogin.textContent = 'Ingresar';
         }
-    });
+        });
 
     document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('token');
         const nombre = localStorage.getItem('userName');
-        const rol = localStorage.getItem('userRole'); // <-- NUEVO
+        const rol = localStorage.getItem('userRole'); 
 
+        // 1. Lógica para la página mi_cuenta.html
         if (token && nombre && document.getElementById('zonaLogin')) {
-            mostrarInfoUsuario(token, nombre, rol); // <-- ROL AÑADIDO
+            mostrarInfoUsuario(token, nombre, rol); 
+        }
+
+        // 2. Lógica para la página gestion_usuarios.html
+        // Comprueba si existe el div #listaUsuarios Y NO existe #zonaLogin
+        if (document.getElementById('listaUsuarios') && !document.getElementById('zonaLogin')) {
+            // Aplicar clase ancha solo en esta página
+            document.querySelector('main').classList.add('admin-mode-wide-main');
+            cargarPanelAdmin(token);
+        }
+
+        // 3. Lógica para la página gestion_reservas.html
+        if (document.getElementById('tituloReservasAdmin')) {
+             // Aplicar clase ancha solo en esta página
+             document.querySelector('main').classList.add('admin-mode-wide-main');
+            cargarReservas(token);
         }
     });
 
@@ -224,6 +297,14 @@ if (formRegistro) {
             return;
         }
 
+        if (pass.length < 6) {
+            mensajeRegistro.textContent = "La contraseña debe tener al menos 6 caracteres.";
+            mensajeRegistro.style.color = "#990000";
+            return; // Detenemos la función aquí
+        }
+        const btnRegistro = formRegistro.querySelector('button[type="submit"]');
+        btnRegistro.disabled = true;
+        btnRegistro.textContent = 'Registrando...';
         try {
             const response = await apiFetch('/register', {
                 method: 'POST',
@@ -250,12 +331,16 @@ if (formRegistro) {
             } else {
                 mensajeRegistro.textContent = data.mensaje;
                 mensajeRegistro.style.color = "#990000";
+                btnRegistro.disabled = false;
+                btnRegistro.textContent = 'Registrarme';
             }
 
         } catch (error) {
             mensajeRegistro.textContent = "Error de conexión. Inténtelo más tarde.";
             mensajeRegistro.style.color = "#990000";
             console.error('Error en el registro:', error);
+            btnRegistro.disabled = false;
+            btnRegistro.textContent = 'Registrarme';
         }
     });
 }
@@ -277,12 +362,15 @@ function mostrarInfoUsuario(token, nombre, rol) {
 
     // Lógica de ROLES
     if (rol === 'administrador') {
-        document.getElementById('tituloReservas').textContent = 'Todas las Reservas';
+        // Muestra el menú de tarjetas de admin
         document.getElementById('seccionAdmin').classList.remove('hidden');
         
-        mainElement.classList.add('admin-mode-wide-main'); // <-- NUEVO: APLICAR CLASE ANCHA
+        // Oculta la sección "Mis Reservas" (que es para clientes)
+        document.getElementById('tituloReservas').classList.add('hidden');
+        document.getElementById('listaReservas').classList.add('hidden');
         
-        cargarPanelAdmin(token);
+        // YA NO llamamos a cargarPanelAdmin(token) aquí
+        // YA NO aplicamos la clase ancha en esta página
     } else {
         document.getElementById('tituloReservas').textContent = 'Mis Reservas';
         document.getElementById('seccionAdmin').classList.add('hidden'); 
@@ -353,12 +441,7 @@ async function cargarReservas(token) {
     }
 }
 
-// NUEVO: Función principal para cargar el panel de administración
 async function cargarPanelAdmin(token) {
-    // 1. Cargar todas las reservas (usa la función de cliente, pero el backend devuelve todas)
-    cargarReservas(token); 
-    
-    // 2. Cargar todos los usuarios para gestión
     const listaUsuariosDiv = document.getElementById('listaUsuarios');
     listaUsuariosDiv.innerHTML = '<p>Cargando usuarios...</p>';
 

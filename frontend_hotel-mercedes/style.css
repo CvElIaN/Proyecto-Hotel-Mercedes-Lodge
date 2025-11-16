@@ -1,3 +1,31 @@
+:root {
+    /* Paleta de Colores Principal (Verdes/Azules) */
+    --color-acento-oscuro-rgb: 40, 75, 99;
+    --color-primario-rgb: 60, 110, 113;
+    --color-primario: #3c6e71;
+
+    --color-primario-oscuro-rgb: 39, 76, 79;
+
+    /* Paleta de Acento */
+    --color-acento-oscuro: #284b63;
+    --color-acento-claro: #aed9e0;
+    --color-hover-claro: #18c5d4;
+
+    /* Colores de Interfaz */
+    --color-texto-principal: #333;
+    --color-texto-secundario: #555;
+    --color-texto-placeholder: #aaa;
+    --color-borde: #ddd;
+    --color-fondo-item: #f9f9f9;
+    --color-blanco: white;
+
+    /* Colores Semánticos (Significado) */
+    --color-precio: #007700;
+    --color-exito: #007700;
+    --color-error: #990000;
+    --color-peligro: #aa4a44;
+    --color-peligro-hover: #c95b54;
+}
 *,
 *::before,
 *::after {
@@ -19,7 +47,7 @@ body {
 }
 
 header {
-    background-color: rgba(60, 110, 113, 0.85); /* #3c6e71 */
+    background-color: rgba(var(--color-primario-rgb), 0.85);
     color: white;
     text-align: center;
     padding: 20px;
@@ -50,7 +78,7 @@ header .tagline {
 
 nav {
     /* MODIFICADO: Verde oscuro de la paleta */
-    background-color: rgba(39, 76, 79, 0.9); /* #274c4f con transparencia */
+    background-color: rgba(var(--color-primario-oscuro-rgb), 0.9);
     text-align: center;
     padding: 10px;
 }
@@ -58,7 +86,7 @@ nav {
 /* La regla 'nav' (la que tiene el fondo #284b63) se queda como está */
 
 nav a {
-    color: white;
+    color: var(--color-blanco);
     margin: 0 5px; /* Reduce el margen horizontal */
     font-weight: bold;
     text-decoration: none;
@@ -75,8 +103,8 @@ nav a {
 nav a:hover,
 nav a.active {
     text-decoration: none;
-    color: #333; 
-    background-color: #aed9e0;
+    color: var(--color-texto-principal); 
+    background-color: var(--color-acento-claro);
 }
 
 main {
@@ -93,7 +121,7 @@ main {
 
 main h2 {
     text-align: center;
-    color: #284b63; /* Usamos el color oscuro de la nav */
+    color: var(--color-acento-oscuro);
     margin-top: 0; /* Quitamos margen superior */
 }
 
@@ -108,7 +136,7 @@ input, select {
     width: 100%;
     padding: 12px; /* Un poco más altos */
     margin-top: 5px;
-    border: 2px solid #ddd; /* Borde más sutil */
+    border: 2px solid var(--color-borde);
     border-radius: 6px;
     
     /* --- NUEVO: Transición para el efecto :focus --- */
@@ -120,13 +148,13 @@ input, select {
    y la opción por defecto (value="") es considerada 'inválida'.
 */
 select:invalid {
-    color: #aaa; /* Un gris claro */
+    color: var(--color-texto-placeholder);
 }
 
 /* Esto asegura que las opciones *dentro de la lista* (cuando la abres) se vean oscuras.
 */
 select option {
-    color: #333; 
+    color: var(--color-texto-principal);
 }
 
 
@@ -134,9 +162,9 @@ button {
     width: 100%;
     padding: 16px; /* Botón más grande */
     margin-top: 25px; /* Más espacio arriba */
-    background: #3c6e71;
+    background: var(--color-primario);
     border: none;
-    color: white;
+    color: var(--color-blanco);
     font-weight: bold;
     font-family: 'Montserrat', sans-serif; /* Fuente de título */
     font-size: 16px;
@@ -148,9 +176,7 @@ button {
 }
 
 button:hover {
-    background: #18c5d4; /* Color claro */
-    
-    /* --- NUEVO: Pequeño efecto de "presionar" --- */
+    background: var(--color-hover-claro);
     transform: translateY(-2px); 
 }
 
@@ -163,11 +189,11 @@ button:hover {
     text-align: center;
 }
 
-/* Este es el <output id="precio"> (solo el número S/XXX) */
+
 #precio {
-    font-weight: bold; /* Hereda el bold */
-    color: #007700; /* Mantenemos el color verde para el precio */
-    font-size: 1em; /* Hereda el tamaño (20px) del padre */
+    font-weight: bold;
+    color: var(--color-precio);
+    font-size: 1em;
     
     /* Importante: <output> es 'inline' por defecto, 
        no necesitamos cambiarle márgenes ni alineación. */
@@ -227,7 +253,7 @@ footer {
 #mensajeLogin {
     margin-top: 15px;
     font-weight: bold;
-    color: #990000;
+    color: var(--color-error);
 }
 /* --- ESTILOS PARA "MI CUENTA" (NUEVO) --- */
 
@@ -241,14 +267,14 @@ footer {
     width: auto; /* No ocupa el 100% */
     padding: 10px 20px;
     font-size: 14px;
-    background: #aa4a44; /* Un tono rojo */
+    background: var(--color-peligro);
     margin-top: 0;
     margin-bottom: 25px; /* Espacio antes de "Mis Reservas" */
 }
 
 #btnCerrarSesion:hover {
-    background: #c95b54;
-    transform: none; /* Quitamos el efecto de "presionar" */
+    background: var(--color-peligro-hover);
+    transform: none;
 }
 
 /* Título de saludo */
@@ -266,8 +292,8 @@ footer {
 
 /* Cada tarjeta de reserva individual */
 .reserva-item {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
+    background: var(--color-fondo-item);
+    border: 1px solid var(--color-borde);
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 15px;
@@ -275,7 +301,7 @@ footer {
 .reserva-item h4 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #284b63;
+    color: var(--color-acento-oscuro);
     font-size: 1.2em;
     text-transform: capitalize; /* Pone "standard" como "Standard" */
 }
@@ -285,7 +311,7 @@ footer {
 }
 .reserva-item .precio {
     font-weight: bold;
-    color: #007700;
+    color: var(--color-precio);
     font-size: 1.1em;
     margin-top: 10px;
 }
@@ -312,8 +338,8 @@ footer {
 }
 
 #listaUsuarios th {
-    background-color: #284b63; /* Color de la nav */
-    color: white;
+    background-color: var(--color-acento-oscuro);
+    color: var(--color-blanco);
     font-weight: 600;
 }
 
@@ -339,4 +365,66 @@ footer {
 #listaUsuarios td > div {
     height: 100%;
     align-items: center; 
+
+/* --- Estilos para el Menú de Admin (Tarjetas) --- */
+.admin-menu {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.admin-card {
+    position: relative; /* Clave para superponer contenido */
+    display: block;
+    width: 200px;
+    height: 150px;
+    padding: 15px;
+    border-radius: 8px;
+    overflow: hidden; /* Clave para que la imagen no se salga */
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    
+    /* Configuración del fondo (imagen + capa de color) */
+    background-size: cover;
+    background-position: center;
+    
+    /* Transición suave */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.admin-card:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Título dentro de la tarjeta */
+.admin-card h4 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--color-blanco);
+    font-size: 1.3em;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    
+    /* Posicionamiento del texto */
+    position: relative;
+    z-index: 2; /* Pone el texto por encima de la capa de color */
+}
+/* Tarjeta 1: Usuarios (con tinte azul oscuro) */
+.card-usuarios {
+    background-image: 
+        /* 1. Capa de color semi-transparente */
+        linear-gradient(rgba(var(--color-acento-oscuro-rgb), 0.6), rgba(var(--color-acento-oscuro-rgb), 0.8)),
+        /* 2. Imagen de fondo */
+        url('Panel_de_usuarios.png');
+}
+
+/* Tarjeta 2: Reservas (con tinte verde primario) */
+.card-reservas {
+    background-image: 
+        /* 1. Capa de color semi-transparente */
+        linear-gradient(rgba(var(--color-primario-rgb), 0.6), rgba(var(--color-primario-rgb), 0.8)),
+        /* 2. Imagen de fondo */
+        url('Gestion_de_reservas.png');
+}
 }
