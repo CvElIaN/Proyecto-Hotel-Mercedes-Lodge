@@ -42,6 +42,7 @@ router.post('/register', async (req, res) => {
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ mensaje: 'El correo electrónico ya está registrado.' });
         }
+        console.error('¡ERROR AL REGISTRAR!', error);
         res.status(500).json({ 
             mensaje: 'Error en el servidor al registrar usuario',
             error: error.message 

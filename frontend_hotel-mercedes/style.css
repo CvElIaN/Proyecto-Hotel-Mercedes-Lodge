@@ -575,3 +575,118 @@ footer {
     text-align: center;
     font-size: 1.1em;
 }
+/*
+=========================================
+ ESTILOS PARA LA PÁGINA DE INICIO (index.html)
+=========================================
+*/
+
+/* 1. Hacemos que el <main> de esta página sea más ancho */
+main.landing-main {
+    width: 90%;
+    max-width: 1200px;
+    padding: 0; /* Quitamos el padding para que la cuadrícula lo ocupe todo */
+    background: rgba(255,255,255,0.98); /* Un fondo casi opaco */
+    overflow: hidden; /* Para contener los bordes redondeados */
+}
+
+/* 2. Creamos la cuadrícula de 2 columnas */
+.landing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas de tamaño igual */
+    min-height: 500px;
+}
+
+/* 3. Columna de la Imagen */
+.landing-image {
+    width: 100%;
+    height: 100%;
+    background: url('Logo_H_Mercedes.png') center center / cover no-repeat; /* Usamos tu imagen de fondo */
+    min-height: 300px; /* Altura mínima para móviles */
+}
+
+/* 4. Columna de Acciones (Login/Registro) */
+.landing-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    text-align: center;
+    background-color: rgba(var(--color-primario-rgb), 0.20);
+    color: var(--color-blanco);
+}
+
+.landing-actions h2 {
+    color: var(--color-acento-oscuro);
+    font-size: 2em;
+    margin-top: 0;
+}
+
+.landing-actions p {
+    color: var(--color-texto-secundario);
+    font-size: 1.1em;
+    max-width: 400px;
+    margin-bottom: 30px;
+}
+
+/* 5. Estilo para el botón de "Iniciar Sesión" (reusamos estilos de <button>) */
+.btn-landing-login {
+    /* Copiamos los estilos de tu botón principal */
+    display: inline-block;
+    width: 80%;
+    max-width: 300px;
+    padding: 16px;
+    background: var(--color-primario);
+    border: none;
+    color: var(--color-blanco);
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-landing-login:hover {
+    background: var(--color-hover-claro);
+    transform: translateY(-2px);
+}
+
+/* 6. Estilo para el enlace de "Regístrate" */
+.landing-register-link {
+    font-size: 1em;
+    color: var(--color-texto-secundario);
+    margin-top: 25px;
+    margin-bottom: 0;
+}
+
+.landing-register-link a {
+    color: var(--color-primario);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.landing-register-link a:hover {
+    text-decoration: underline;
+}
+
+/* 7. Hacemos que sea responsive en móviles (apilamos las columnas) */
+@media (max-width: 800px) {
+    .landing-grid {
+        grid-template-columns: 1fr; /* Una sola columna */
+    }
+    
+    .landing-image {
+        height: 250px; /* Reducimos la altura de la imagen en móvil */
+    }
+
+    .landing-actions {
+        padding: 30px;
+    }
+
+    .landing-actions h2 {
+        font-size: 1.6em;
+    }
+}
