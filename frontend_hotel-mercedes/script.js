@@ -186,9 +186,6 @@ if (formLogin) {
             btnLogin.textContent = 'Ingresar';
         }
     });
-
-    // --- ESTA ES LA LÓGICA QUE ARREGLARÁ EL BUG #3 MÁS ADELANTE ---
-    // (La incluimos ahora porque ya estaba dentro de tu bloque if (formLogin))
 }
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
@@ -211,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cargarReservas(token);
     }
     if (document.getElementById('listaHabitacionesDisponibles')) {
+            document.querySelector('main').classList.add('admin-mode-wide-main');
             const busquedaData = sessionStorage.getItem('busquedaReserva');
             if (busquedaData) {
                 // Si encontramos datos de búsqueda, los mostramos
@@ -716,21 +714,21 @@ function mostrarHabitacionesDisponibles(busqueda) {
             nombre: 'Habitación Standard',
             precio_noche: 150,
             descripcion: 'Perfecta para viajeros solos o parejas. Cómoda y con vistas al jardín.',
-            imagen: 'Panel_de_usuarios.png' // <-- CAMBIA ESTO
+            imagen: 'Habitacion-Estandar.jpg'
         },
         {
             tipo: 'suite',
             nombre: 'Suite de Lujo',
             precio_noche: 250,
             descripcion: 'Amplia suite con sala de estar separada y balcón privado.',
-            imagen: 'Gestion_de_reservas.png' // <-- CAMBIA ESTO
+            imagen: 'Habitacion-Suite.jpg'
         },
         {
             tipo: 'premium',
             nombre: 'Habitación Premium',
             precio_noche: 350,
             descripcion: 'Nuestra mejor habitación. Vistas panorámicas, jacuzzi y cama King size.',
-            imagen: 'Fondo_Page.jpg' // <-- CAMBIA ESTO
+            imagen: 'Habitacion-Premiun.jpg'
         }
     ];
 

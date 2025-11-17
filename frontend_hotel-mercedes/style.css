@@ -478,15 +478,36 @@ footer {
 
 /* La cuadrícula (grid) que contendrá las tarjetas */
 .habitaciones-grid {
-    display: grid;
-    /* Columnas automáticas:
-       - Intenta que midan 280px.
-       - Si hay espacio, crecen (1fr).
-       - Si no, se van para abajo.
-    */
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex; /* Cambiamos a flexbox para un diseño en fila */
+    overflow-x: auto; /* Permite desplazamiento horizontal si las tarjetas no caben */
     gap: 25px; /* Espacio entre las tarjetas */
+    padding-bottom: 15px; /* Añade un poco de padding inferior para la barra de desplazamiento */
+    -webkit-overflow-scrolling: touch; /* Mejora el scroll en dispositivos iOS */
+
+    /* Opcional: Para una mejor estética, puedes añadir bordes redondeados al contenedor
+       y una sombra si quieres que se vea como un "carrusel" */
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05); /* Sombra interior sutil */
+    padding: 15px 10px; /* Ajusta el padding para la sombra y el scroll */
 }
+
+/* Ajustes para las tarjetas dentro del flexbox */
+.habitacion-card {
+    /* Mantén tus estilos existentes de la tarjeta */
+    min-width: 300px; /* Define un ancho mínimo para cada tarjeta */
+    max-width: 350px; /* Define un ancho máximo para cada tarjeta si deseas */
+    flex-shrink: 0; /* IMPORANTE: Evita que las tarjetas se encojan más allá de su min-width */
+    flex-grow: 0; /* IMPORANTE: Evita que las tarjetas crezcan más allá de su max-width */
+    
+    background: var(--color-blanco);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+/* No olvides que la tarjeta debe tener un min-width definido para que no se achique demasiado. */
 
 /* La tarjeta individual de la habitación */
 .habitacion-card {
