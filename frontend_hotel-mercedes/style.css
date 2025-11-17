@@ -459,3 +459,98 @@ footer {
 .btn-volver:hover {
     background: var(--color-primario);
 }
+/* --- Estilos para la página "Elegir Habitación" --- */
+
+/* Estilo para el resumen de la búsqueda */
+.resumen-busqueda {
+    background: rgba(var(--color-primario-rgb), 0.1); /* Tinte verdoso claro */
+    border: 1px dashed var(--color-primario);
+    border-radius: 8px;
+    padding: 10px 20px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+.resumen-busqueda p {
+    margin: 5px 0;
+    font-weight: 600;
+    color: var(--color-acento-oscuro);
+}
+
+/* La cuadrícula (grid) que contendrá las tarjetas */
+.habitaciones-grid {
+    display: grid;
+    /* Columnas automáticas:
+       - Intenta que midan 280px.
+       - Si hay espacio, crecen (1fr).
+       - Si no, se van para abajo.
+    */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px; /* Espacio entre las tarjetas */
+}
+
+/* La tarjeta individual de la habitación */
+.habitacion-card {
+    background: var(--color-blanco);
+    border-radius: 8px;
+    overflow: hidden; /* Importante para que la imagen no se salga */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column; /* Apila la imagen y el contenido */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.habitacion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+
+/* La imagen de la habitación */
+.habitacion-card-img {
+    height: 180px;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+/* El contenido (texto y botón) de la tarjeta */
+.habitacion-card-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Hace que el contenido ocupe el espacio */
+}
+
+.habitacion-card-content h3 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--color-acento-oscuro);
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.habitacion-card-content p {
+    margin: 0 0 15px 0;
+    color: var(--color-texto-secundario);
+    font-size: 0.9em;
+    flex-grow: 1; /* Empuja el precio y botón al fondo */
+}
+
+.habitacion-card-precio {
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--color-precio);
+    text-align: right;
+    margin-bottom: 15px;
+}
+.habitacion-card-precio span {
+    font-size: 0.6em;
+    font-weight: 400;
+    color: var(--color-texto-secundario);
+}
+
+/* Mensaje de éxito/error de la reserva final */
+#mensajeReservaFinal {
+    margin-top: 25px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.1em;
+}

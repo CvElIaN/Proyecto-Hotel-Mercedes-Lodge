@@ -91,74 +91,39 @@ function poblarSelectsReserva() {
 }
 
 if (document.getElementById("formReserva")) {
+    // 1. Configura la fecha mínima
     document.getElementById("fecha").min = new Date().toISOString().split("T")[0];
-    poblarSelectsReserva();
-    document.getElementById("habitacion").addEventListener("change", calcularPrecio);
-    document.getElementById("noches").addEventListener("change", calcularPrecio);
     
-    document.getElementById("formReserva").addEventListener("submit", async function(event) {
-        event.preventDefault(); 
-        
-        const mensajeElemento = document.getElementById("mensaje");
-        
-        const habitacion = document.getElementById("habitacion").value;
+    // 2. Rellena los menús desplegables
+    poblarSelectsReserva();
+    
+    // 3. Ya NO necesitamos los listeners para "calcularPrecio"
+    //    (Los borramos porque el precio se ve en la siguiente página)
+
+    // 4. Nueva lógica para el formulario de BÚSQUEDA
+    document.getElementById("formReserva").addEventListener("submit", function(event) {
+        event.preventDefault(); // Evita que la página se recargue
+
+        // Obtenemos los datos de la búsqueda
         const fecha = document.getElementById("fecha").value;
-        const noches = parseInt(document.getElementById("noches").value);
-        const huespedes = parseInt(document.getElementById("huespedes").value);
-        const ninos = parseInt(document.getElementById("ninos").value);
-        
-        const precioOutput = document.getElementById("precio").value;
-        const precioTotal = Number(precioOutput.replace('S/', ''));
+        const noches = document.getElementById("noches").value;
+        const huespedes = document.getElementById("huespedes").value;
+        const ninos = document.getElementById("ninos").value;
 
-        const btnReserva = document.getElementById("formReserva").querySelector('button[type="submit"]');
-        btnReserva.disabled = true;
-        btnReserva.textContent = 'Confirmando...';
+        // Creamos un objeto con la búsqueda
+        const busquedaReserva = {
+            fecha: fecha,
+            noches: noches,
+            huespedes: huespedes,
+            ninos: ninos
+        };
 
-        try {
-            const response = await apiFetch('/reservas', {
-                method: 'POST',
-                body: {
-                    habitacion: habitacion,
-                    fecha: fecha,
-                    noches: noches,
-                    huespedes: huespedes,
-                    ninos: ninos,
-                    precioTotal: precioTotal
-                }
-            });
+        // Guardamos esta búsqueda en sessionStorage (memoria temporal del navegador)
+        // Usamos JSON.stringify para convertir el objeto en texto
+        sessionStorage.setItem('busquedaReserva', JSON.stringify(busquedaReserva));
 
-            const data = await response.json();
-
-            if (response.ok) {
-                // ¡Éxito!
-                mensajeElemento.textContent = data.mensaje; // "¡Reserva registrada...!"
-                mensajeElemento.style.color = "#007700";
-                document.getElementById("formReserva").reset();
-                document.getElementById("precio").value = "";
-
-                // AÑADIDO: Redirigir a mi_cuenta.html después de 1.5 segundos
-                setTimeout(() => {
-                    window.location.href = 'mi_cuenta.html';
-                }, 1500); // 1500 milisegundos = 1.5 segundos
-
-            } else {
-                if (response.status === 401 || response.status === 403) {
-                   mensajeElemento.textContent = "Error: Tu sesión ha expirado. Por favor, inicia sesión de nuevo.";
-                } else {
-                   mensajeElemento.textContent = data.mensaje;
-                }
-                mensajeElemento.style.color = "#990000";
-                btnReserva.disabled = false;
-                btnReserva.textContent = 'Confirmar Reserva';
-            }
-
-        } catch (error) {
-            mensajeElemento.textContent = error.message;
-            mensajeElemento.style.color = "#990000";
-            console.error('Error al reservar:', error);
-            btnReserva.disabled = false;
-            btnReserva.textContent = 'Confirmar Reserva';
-        }
+        // Redirigimos al usuario a la nueva página para elegir la habitación
+        window.location.href = 'elegir_habitacion.html';
     });
 }
 
@@ -233,10 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (token && nombre && document.getElementById('zonaLogin')) {
         mostrarInfoUsuario(token, nombre, rol); 
     }
-    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
 
-    // 2. Lógica para la página gestion_usuarios.html
-    // Comprueba si existe el div #listaUsuarios Y NO existe #zonaLogin
     if (document.getElementById('listaUsuarios') && !document.getElementById('zonaLogin')) {
         // Aplicar clase ancha solo en esta página
         document.querySelector('main').classList.add('admin-mode-wide-main');
@@ -248,6 +210,18 @@ document.addEventListener('DOMContentLoaded', () => {
          document.querySelector('main').classList.add('admin-mode-wide-main');
         cargarReservas(token);
     }
+    if (document.getElementById('listaHabitacionesDisponibles')) {
+            const busquedaData = sessionStorage.getItem('busquedaReserva');
+            if (busquedaData) {
+                // Si encontramos datos de búsqueda, los mostramos
+                const busqueda = JSON.parse(busquedaData);
+                mostrarHabitacionesDisponibles(busqueda);
+            } else {
+                // Si no, el usuario llegó aquí por error. Lo regresamos.
+                alert('No has iniciado una búsqueda. Te redirigiremos.');
+                window.location.href = 'reserva_hotel.html';
+            }
+        }
     });
     const btnCerrarSesion = document.getElementById('btnCerrarSesion');
     if(btnCerrarSesion) {
@@ -716,4 +690,145 @@ if (formRecuperar) {
             btnRecuperar.textContent = 'Actualizar Contraseña';
         }
     });
+}
+/**
+ * Lógica para la página elegir_habitacion.html
+ * Lee la búsqueda de sessionStorage y muestra las habitaciones.
+ */
+function mostrarHabitacionesDisponibles(busqueda) {
+    const resumenDiv = document.getElementById('resumenBusqueda');
+    const habitacionesDiv = document.getElementById('listaHabitacionesDisponibles');
+    
+    // 1. Mostrar resumen de la búsqueda
+    const fecha = new Date(busqueda.fecha).toLocaleDateString('es-ES', {
+        year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+    });
+    resumenDiv.innerHTML = `
+        <p><strong>Fecha:</strong> ${fecha}</p>
+        <p><strong>Noches:</strong> ${busqueda.noches} | <strong>Huéspedes:</strong> ${busqueda.huespedes} Adultos, ${busqueda.ninos} Niños</p>
+    `;
+
+    // 2. Definir los datos de las habitaciones
+    // (Usamos tus imágenes subidas como placeholders, ¡cámbialas por las de tus habitaciones!)
+    const habitaciones = [
+        {
+            tipo: 'standard',
+            nombre: 'Habitación Standard',
+            precio_noche: 150,
+            descripcion: 'Perfecta para viajeros solos o parejas. Cómoda y con vistas al jardín.',
+            imagen: 'Panel_de_usuarios.png' // <-- CAMBIA ESTO
+        },
+        {
+            tipo: 'suite',
+            nombre: 'Suite de Lujo',
+            precio_noche: 250,
+            descripcion: 'Amplia suite con sala de estar separada y balcón privado.',
+            imagen: 'Gestion_de_reservas.png' // <-- CAMBIA ESTO
+        },
+        {
+            tipo: 'premium',
+            nombre: 'Habitación Premium',
+            precio_noche: 350,
+            descripcion: 'Nuestra mejor habitación. Vistas panorámicas, jacuzzi y cama King size.',
+            imagen: 'Fondo_Page.jpg' // <-- CAMBIA ESTO
+        }
+    ];
+
+    // 3. Generar las tarjetas
+    habitacionesDiv.innerHTML = ''; // Limpiamos el "Cargando..."
+    habitaciones.forEach(hab => {
+        const precioTotal = hab.precio_noche * parseInt(busqueda.noches);
+        
+        const cardHTML = `
+            <div class="habitacion-card">
+                <div class="habitacion-card-img" style="background-image: url('${hab.imagen}')"></div>
+                
+                <div class="habitacion-card-content">
+                    <h3>${hab.nombre}</h3>
+                    <p>${hab.descripcion}</p>
+                    <div class="habitacion-card-precio">
+                        S/${precioTotal} <span>(${busqueda.noches} noches)</span>
+                    </div>
+                    <button class="btn-reservar-ahora" 
+                            data-tipo="${hab.tipo}" 
+                            data-precio="${precioTotal}">
+                        Reservar esta habitación
+                    </button>
+                </div>
+            </div>
+        `;
+        habitacionesDiv.innerHTML += cardHTML;
+    });
+
+    // 4. Asignar los "click" a los botones que acabamos de crear
+    document.querySelectorAll('.btn-reservar-ahora').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const tipo = e.target.dataset.tipo;
+            const precio = e.target.dataset.precio;
+            
+            // Llamamos a la función final de reserva
+            realizarReservaFinal(busqueda, tipo, precio, e.target);
+        });
+    });
+}
+/**
+ * Esta es la función final. Se llama al hacer clic en un botón de tarjeta.
+ * Recopila TODOS los datos y llama a la API para crear la reserva.
+ */
+async function realizarReservaFinal(busqueda, tipoHabitacion, precioTotal, boton) {
+    const mensajeFinal = document.getElementById('mensajeReservaFinal');
+    mensajeFinal.textContent = ''; // Limpiar mensajes
+
+    // Deshabilitar todos los botones para evitar doble reserva
+    document.querySelectorAll('.btn-reservar-ahora').forEach(btn => {
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+    });
+
+    try {
+        const response = await apiFetch('/reservas', {
+            method: 'POST',
+            body: {
+                // Datos de la búsqueda (Paso 1)
+                fecha: busqueda.fecha,
+                noches: parseInt(busqueda.noches),
+                huespedes: parseInt(busqueda.huespedes),
+                ninos: parseInt(busqueda.ninos),
+                
+                // Datos de la habitación (Paso 2)
+                habitacion: tipoHabitacion,
+                precioTotal: parseFloat(precioTotal)
+            }
+        });
+        
+        const data = await response.json();
+
+        if (response.ok) {
+            mensajeFinal.textContent = "¡Reserva confirmada con éxito! Redirigiendo a Mi Cuenta...";
+            mensajeFinal.style.color = "var(--color-exito)";
+            
+            // Redirigir a mi_cuenta después de 2 segundos
+            setTimeout(() => {
+                window.location.href = 'mi_cuenta.html';
+            }, 2000);
+
+        } else {
+             // Si falla (ej. token expiró), mostrar error
+            mensajeFinal.textContent = `Error: ${data.mensaje}`;
+            mensajeFinal.style.color = "var(--color-error)";
+            // Reactivar solo el botón que falló
+            boton.disabled = false;
+            boton.textContent = 'Reservar esta habitación';
+        }
+
+    } catch (error) {
+        // Error de red o si el token no existe (lo cual apiFetch maneja)
+        mensajeFinal.textContent = error.message;
+        mensajeFinal.style.color = "var(--color-error)";
+        // Reactivar todos los botones si falla la red
+        document.querySelectorAll('.btn-reservar-ahora').forEach(btn => {
+            btn.disabled = false;
+            btn.textContent = 'Reservar esta habitación';
+        });
+    }
 }
