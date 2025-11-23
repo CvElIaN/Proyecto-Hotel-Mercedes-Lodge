@@ -690,3 +690,90 @@ main.landing-main {
         font-size: 1.6em;
     }
 }
+/* --- ESTILOS PARA EL MODAL (VENTANA EMERGENTE) --- */
+
+.modal {
+    position: fixed;
+    z-index: 1000; /* Asegura que esté encima de todo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo negro semitransparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Clase para mostrar el modal */
+.modal.mostrar {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px; /* Ancho máximo de la ventana */
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    text-align: center;
+    animation: slideDown 0.3s ease;
+    overflow: visible;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-50px); }
+    to { transform: translateY(0); }
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    max-height: 400px;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.modal-text h3 {
+    color: var(--color-acento-oscuro);
+    margin-bottom: 10px;
+}
+
+.resena-extra {
+    color: var(--color-primario);
+    margin-top: 15px;
+    font-size: 0.9em;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+/* Estilo para la X flotante */
+.close-modal {
+    position: absolute;
+    top: -40px;       /* Lo empuja hacia arriba, fuera de la caja blanca */
+    right: 0;         /* Lo alinea a la derecha */
+    color: #ffffff;   /* Color BLANCO para que contraste con el fondo oscuro */
+    font-size: 35px;  
+    font-weight: bold;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    z-index: 1001;
+    transition: transform 0.2s ease;
+}
+
+.close-modal:hover {
+    color: #ff4d4d; /* Color rojo al pasar el mouse */
+    transform: scale(1.1);
+}
+
+/* Hacemos que la imagen en la tarjeta original parezca cliqueable */
+.habitacion-card-img {
+    cursor: pointer; /* Cambia el cursor a manito */
+}

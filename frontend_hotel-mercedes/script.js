@@ -689,15 +689,13 @@ if (formRecuperar) {
         }
     });
 }
-/**
- * Lógica para la página elegir_habitacion.html
- * Lee la búsqueda de sessionStorage y muestra las habitaciones.
- */
+/* Reemplaza tu función mostrarHabitacionesDisponibles con esta versión mejorada */
+
 function mostrarHabitacionesDisponibles(busqueda) {
     const resumenDiv = document.getElementById('resumenBusqueda');
     const habitacionesDiv = document.getElementById('listaHabitacionesDisponibles');
     
-    // 1. Mostrar resumen de la búsqueda
+    // 1. Mostrar resumen
     const fecha = new Date(busqueda.fecha).toLocaleDateString('es-ES', {
         year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
     });
@@ -706,40 +704,44 @@ function mostrarHabitacionesDisponibles(busqueda) {
         <p><strong>Noches:</strong> ${busqueda.noches} | <strong>Huéspedes:</strong> ${busqueda.huespedes} Adultos, ${busqueda.ninos} Niños</p>
     `;
 
-    // 2. Definir los datos de las habitaciones
-    // (Usamos tus imágenes subidas como placeholders, ¡cámbialas por las de tus habitaciones!)
+    // 2. Definir datos (Igual que antes)
     const habitaciones = [
         {
             tipo: 'standard',
             nombre: 'Habitación Standard',
             precio_noche: 150,
             descripcion: 'Perfecta para viajeros solos o parejas. Cómoda y con vistas al jardín.',
-            imagen: 'Habitacion-Estandar.jpg'
+            imagen: 'Habitacion-Estandar.png'
         },
         {
             tipo: 'suite',
             nombre: 'Suite de Lujo',
             precio_noche: 250,
             descripcion: 'Amplia suite con sala de estar separada y balcón privado.',
-            imagen: 'Habitacion-Suite.jpg'
+            imagen: 'Habitacion-Suite.png'
         },
         {
             tipo: 'premium',
             nombre: 'Habitación Premium',
             precio_noche: 350,
             descripcion: 'Nuestra mejor habitación. Vistas panorámicas, jacuzzi y cama King size.',
-            imagen: 'Habitacion-Premiun.jpg'
+            imagen: 'Habitacion-Premiun.png'
         }
     ];
 
     // 3. Generar las tarjetas
-    habitacionesDiv.innerHTML = ''; // Limpiamos el "Cargando..."
-    habitaciones.forEach(hab => {
+    habitacionesDiv.innerHTML = ''; 
+    
+    habitaciones.forEach((hab, index) => {
         const precioTotal = hab.precio_noche * parseInt(busqueda.noches);
         
         const cardHTML = `
             <div class="habitacion-card">
-                <div class="habitacion-card-img" style="background-image: url('${hab.imagen}')"></div>
+                <div class="habitacion-card-img clickable-img" 
+                     data-index="${index}"
+                     style="background-image: url('${hab.imagen}')"
+                     title="Ver detalles">
+                </div>
                 
                 <div class="habitacion-card-content">
                     <h3>${hab.nombre}</h3>
@@ -758,17 +760,71 @@ function mostrarHabitacionesDisponibles(busqueda) {
         habitacionesDiv.innerHTML += cardHTML;
     });
 
-    // 4. Asignar los "click" a los botones que acabamos de crear
+    // 4. Asignar eventos a los botones de reservar (Igual que antes)
     document.querySelectorAll('.btn-reservar-ahora').forEach(button => {
         button.addEventListener('click', (e) => {
             const tipo = e.target.dataset.tipo;
             const precio = e.target.dataset.precio;
-            
-            // Llamamos a la función final de reserva
             realizarReservaFinal(busqueda, tipo, precio, e.target);
         });
     });
+
+    // 5. NUEVO: Asignar evento click a las IMÁGENES para abrir el modal
+    document.querySelectorAll('.clickable-img').forEach(imgDiv => {
+        imgDiv.addEventListener('click', (e) => {
+            const index = e.target.dataset.index; // Obtenemos el índice
+            const habitacionData = habitaciones[index]; // Sacamos los datos del array
+            abrirModalHabitacion(habitacionData); // Llamamos a la función del modal
+        });
+    });
 }
+
+// --- NUEVAS FUNCIONES PARA EL MODAL ---
+
+function abrirModalHabitacion(habitacion) {
+    const modal = document.getElementById('modalHabitacion');
+    const img = document.getElementById('imgModal');
+    const titulo = document.getElementById('tituloModal');
+    const desc = document.getElementById('descModal');
+
+    // Llenamos los datos
+    img.src = habitacion.imagen;
+    titulo.textContent = habitacion.nombre;
+    desc.textContent = habitacion.descripcion + " Además, incluye servicio a la habitación 24 horas y acceso a la piscina."; // Reseña extendida
+
+    // Mostramos el modal
+    modal.classList.remove('hidden'); // Quitamos hidden (display:none)
+    // Pequeño timeout para permitir que la transición CSS funcione
+    setTimeout(() => {
+        modal.classList.add('mostrar');
+    }, 10);
+}
+
+// Configurar el cierre del modal (esto se ejecuta al cargar el script)
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modalHabitacion');
+    if (modal) {
+        const closeBtn = modal.querySelector('.close-modal');
+
+        // Función para cerrar
+        const cerrar = () => {
+            modal.classList.remove('mostrar');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Esperamos a que termine la animación
+        };
+
+        // Click en la X
+        closeBtn.addEventListener('click', cerrar);
+
+        // Click fuera del contenido (en el fondo oscuro)
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                cerrar();
+            }
+        });
+    }
+});
 /**
  * Esta es la función final. Se llama al hacer clic en un botón de tarjeta.
  * Recopila TODOS los datos y llama a la API para crear la reserva.

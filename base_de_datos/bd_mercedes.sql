@@ -37,3 +37,5 @@ CREATE TABLE IF NOT EXISTS Reservas (
     FOREIGN KEY (usuario_id) REFERENCES Usuarios(id),
     FOREIGN KEY (habitacion_id) REFERENCES Habitaciones(id)
 );
+
+SELECT * FROM Usuarios;
